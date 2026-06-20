@@ -22,18 +22,28 @@ public struct ThemeStudioView: View {
         self.model = model
     }
 
+    /// The resolved, live theme that both the controls chrome and the preview
+    /// render with, so edits update the whole surface immediately.
+    private var mise: MiseTheme { MiseTheme(model.theme) }
+
     public var body: some View {
-        HStack(spacing: 0) {
-            controls
-                .frame(width: 320)
-                .background(.background)
-
-            Divider()
-
-            preview
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ScrollView {
+            VStack(alignment: .leading, spacing: mise.spacing(3)) {
+                hero
+                HStack(alignment: .top, spacing: mise.spacing(3)) {
+                    controlsCard
+                        .frame(width: 360)
+                    previewCard
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(mise.spacing(4))
+            .frame(maxWidth: 1100, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(minWidth: 820, minHeight: 560)
+        .background(.clear)
+        .miseTheme(model.theme)
         .fileExporter(
             isPresented: $isExporting,
             document: ThemeFileDocument(model: model),
@@ -48,38 +58,77 @@ public struct ThemeStudioView: View {
         }
     }
 
-    // MARK: Controls
+    // MARK: Hero
 
-    private var controls: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                header
-
-                section("Preset") { presetPicker }
-                section("Colors") { colorWells }
-                section("Typography") { typographyControls }
-                section("Layout") { layoutControls }
-
-                if let error = model.importError {
-                    importErrorBanner(error)
-                }
-            }
-            .padding(20)
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: mise.spacing(0.75)) {
+            Text("MAKE IT YOURS")
+                .font(mise.font(.caption))
+                .tracking(2.5)
+                .foregroundStyle(mise.accent)
+                .lineLimit(1)
+            Text("Theme")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(mise.textPrimary)
+                .lineLimit(1)
         }
+        .padding(.bottom, mise.spacing(0.5))
     }
 
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Theme Studio")
-                    .font(.headline)
-                Text(model.theme.name)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+    // MARK: Controls card
+
+    private var controlsCard: some View {
+        VStack(alignment: .leading, spacing: mise.spacing(2.5)) {
+            controlsHeader
+
+            controlGroup("Preset") { presetPicker }
+            controlGroup("Colors") { colorWells }
+            controlGroup("Typography") { typographyControls }
+            controlGroup("Layout") { layoutControls }
+
+            if let error = model.importError {
+                importErrorBanner(error)
             }
-            Spacer()
-            Button("Import") { isImporting = true }
-            Button("Export") { isExporting = true }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(mise.spacing(2.5))
+        .miseCard(mise)
+    }
+
+    private var controlsHeader: some View {
+        HStack(alignment: .firstTextBaseline, spacing: mise.spacing(1)) {
+            VStack(alignment: .leading, spacing: mise.spacing(0.25)) {
+                Text(model.theme.name)
+                    .font(mise.font(.headline))
+                    .foregroundStyle(mise.textPrimary)
+                    .lineLimit(1)
+                Text("Editing")
+                    .font(mise.font(.caption))
+                    .tracking(1.2)
+                    .foregroundStyle(mise.textTertiary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            HStack(spacing: mise.spacing(1)) {
+                Button("Import") { isImporting = true }
+                    .buttonStyle(.plain)
+                    .font(mise.font(.body))
+                    .foregroundStyle(mise.textPrimary)
+                    .padding(.horizontal, mise.spacing(1.5))
+                    .padding(.vertical, mise.spacing(0.875))
+                    .miseField(mise)
+
+                Button("Export") { isExporting = true }
+                    .buttonStyle(.plain)
+                    .font(mise.font(.body))
+                    .foregroundStyle(mise.onSelection)
+                    .padding(.horizontal, mise.spacing(1.5))
+                    .padding(.vertical, mise.spacing(0.875))
+                    .background(
+                        RoundedRectangle(cornerRadius: mise.smallCornerRadius, style: .continuous)
+                            .fill(mise.accent)
+                    )
+            }
         }
     }
 
@@ -105,19 +154,25 @@ public struct ThemeStudioView: View {
     }
 
     private var colorWells: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: mise.spacing(0.75)) {
             ForEach(PaletteRole.allCases) { role in
-                HStack {
+                HStack(spacing: mise.spacing(1)) {
                     ColorPicker(
                         role.label,
                         selection: binding(for: role),
                         supportsOpacity: true
                     )
-                    Spacer()
+                    .font(mise.font(.body))
+                    .foregroundStyle(mise.textPrimary)
+                    Spacer(minLength: mise.spacing(1))
                     Text(model.hex(for: role))
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                        .font(mise.font(.mono))
+                        .foregroundStyle(mise.textSecondary)
+                        .lineLimit(1)
                 }
+                .padding(.horizontal, mise.spacing(1.25))
+                .padding(.vertical, mise.spacing(0.875))
+                .miseField(mise)
             }
         }
     }
@@ -130,61 +185,91 @@ public struct ThemeStudioView: View {
     }
 
     private var typographyControls: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: mise.spacing(1.5)) {
             Picker("Font", selection: fontFamilyBinding) {
                 ForEach(FontFamily.allCases, id: \.self) { family in
                     Text(family.rawValue.capitalized).tag(family)
                 }
             }
+            .pickerStyle(.menu)
+            .labelsHidden()
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: mise.spacing(0.75)) {
                 HStack {
                     Text("Size")
-                    Spacer()
+                        .font(mise.font(.body))
+                        .foregroundStyle(mise.textSecondary)
+                    Spacer(minLength: 0)
                     Text(String(format: "%.0f%%", model.theme.typography.sizeScale * 100))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(mise.font(.mono))
+                        .foregroundStyle(mise.textSecondary)
+                        .lineLimit(1)
                 }
                 Slider(
                     value: sizeScaleBinding,
                     in: ThemeStudioModel.sizeScaleRange
                 )
+                .tint(mise.accent)
             }
         }
     }
 
     private var layoutControls: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Picker("Density", selection: densityBinding) {
-                ForEach(LayoutDensity.allCases, id: \.self) { density in
-                    Text(density.rawValue.capitalized).tag(density)
+        VStack(alignment: .leading, spacing: mise.spacing(1.5)) {
+            labeledPicker("Density") {
+                Picker("Density", selection: densityBinding) {
+                    ForEach(LayoutDensity.allCases, id: \.self) { density in
+                        Text(density.rawValue.capitalized).tag(density)
+                    }
                 }
             }
-            Picker("Poster Wall", selection: wallBinding) {
-                ForEach(PosterWallStyle.allCases, id: \.self) { style in
-                    Text(style.rawValue.capitalized).tag(style)
+            labeledPicker("Poster Wall") {
+                Picker("Poster Wall", selection: wallBinding) {
+                    ForEach(PosterWallStyle.allCases, id: \.self) { style in
+                        Text(style.rawValue.capitalized).tag(style)
+                    }
                 }
             }
-            Picker("Widget", selection: widgetBinding) {
-                ForEach(WidgetSkin.allCases, id: \.self) { skin in
-                    Text(skin.rawValue.capitalized).tag(skin)
+            labeledPicker("Widget") {
+                Picker("Widget", selection: widgetBinding) {
+                    ForEach(WidgetSkin.allCases, id: \.self) { skin in
+                        Text(skin.rawValue.capitalized).tag(skin)
+                    }
                 }
             }
         }
-        .pickerStyle(.menu)
+    }
+
+    /// A label + menu picker row, with the picker styled as a recessed field.
+    @ViewBuilder
+    private func labeledPicker<P: View>(
+        _ label: String,
+        @ViewBuilder picker: () -> P
+    ) -> some View {
+        HStack(spacing: mise.spacing(1)) {
+            Text(label)
+                .font(mise.font(.body))
+                .foregroundStyle(mise.textSecondary)
+                .lineLimit(1)
+            Spacer(minLength: mise.spacing(1))
+            picker()
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .tint(mise.textPrimary)
+        }
     }
 
     private func importErrorBanner(_ error: ThemeDocumentError) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: mise.spacing(1)) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
+                .foregroundStyle(mise.secondaryAccent)
             Text(Self.message(for: error))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(mise.font(.caption))
+                .foregroundStyle(mise.textSecondary)
         }
-        .padding(10)
+        .padding(mise.spacing(1.25))
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+        .miseField(mise)
     }
 
     // MARK: Bindings
@@ -207,48 +292,47 @@ public struct ThemeStudioView: View {
 
     // MARK: Live preview
 
-    private var preview: some View {
-        let mise = MiseTheme(model.theme)
-        return ScrollView {
-            VStack(alignment: .leading, spacing: mise.spacing(2)) {
-                SectionHeader("Your Mise", subtitle: model.theme.name)
+    private var previewCard: some View {
+        VStack(alignment: .leading, spacing: mise.spacing(2.5)) {
+            SectionHeader("Live preview", subtitle: model.theme.name)
 
-                HStack(spacing: mise.spacing(1.5)) {
-                    StatCard(title: "Films", value: "1,284", caption: "this year")
-                    StatCard(title: "Hours", value: "2,041")
-                    StatCard(title: "Avg", value: "★ 3.8")
-                }
+            StatBand([
+                StatItem(value: "1,284", label: "Films logged"),
+                StatItem(value: "2,041", unit: "hrs", label: "Runtime"),
+                StatItem(value: "★ 3.8", label: "Avg rating", emphasis: true),
+            ])
 
+            VStack(alignment: .leading, spacing: mise.spacing(1.5)) {
+                SectionHeader("Ratings", subtitle: "How stars render")
                 VStack(alignment: .leading, spacing: mise.spacing(0.5)) {
                     StarRatingView(rating: Rating(halfStars: 9))
                     StarRatingView(rating: Rating(halfStars: 6))
                 }
+            }
 
-                SectionHeader("Poster Wall", subtitle: model.theme.posterWallStyle.rawValue)
+            VStack(alignment: .leading, spacing: mise.spacing(1.5)) {
+                SectionHeader("Poster wall", subtitle: model.theme.posterWallStyle.rawValue.capitalized)
                 PosterWallView(
                     films: MiseUIPreviewData.films,
                     style: model.theme.posterWallStyle
                 )
             }
-            .padding(mise.spacing(3))
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(mise.background)
-        .miseTheme(model.theme)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(mise.spacing(2.5))
+        .miseCard(mise)
     }
 
     // MARK: Helpers
 
+    /// A controls subgroup: a `SectionHeader` over its content.
     @ViewBuilder
-    private func section<Content: View>(
+    private func controlGroup<Content: View>(
         _ title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: mise.spacing(1.25)) {
+            SectionHeader(title)
             content()
         }
     }

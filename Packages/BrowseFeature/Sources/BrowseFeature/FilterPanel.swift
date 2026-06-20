@@ -3,25 +3,25 @@ import MiseCore
 import MiseUI
 import FilmQuery
 
-/// The left-hand filter controls, driven entirely by the model's available facets.
+/// The filter controls, driven entirely by the model's available facets. Rendered
+/// as the content of a translucent card by `BrowseView`; supplies its own internal
+/// rhythm but no card chrome or outer padding of its own.
 struct FilterPanel: View {
     @Environment(\.miseTheme) private var theme
     @Bindable var model: BrowseModel
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: theme.spacing(2.5)) {
-                searchSection
-                ratingSection
-                if !facets.genres.isEmpty { genreSection }
-                if !facets.decades.isEmpty { decadeSection }
-                if let runtime = facets.runtimeRange, runtime.lowerBound < runtime.upperBound {
-                    runtimeSection(bounds: runtime)
-                }
-                togglesSection
+        VStack(alignment: .leading, spacing: theme.spacing(2.5)) {
+            searchSection
+            ratingSection
+            if !facets.genres.isEmpty { genreSection }
+            if !facets.decades.isEmpty { decadeSection }
+            if let runtime = facets.runtimeRange, runtime.lowerBound < runtime.upperBound {
+                runtimeSection(bounds: runtime)
             }
-            .padding(theme.spacing(2))
+            togglesSection
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var facets: Facets { model.facets }
@@ -31,31 +31,24 @@ struct FilterPanel: View {
     private var searchSection: some View {
         VStack(alignment: .leading, spacing: theme.spacing(0.75)) {
             label("Search")
-            HStack(spacing: theme.spacing(0.5)) {
+            HStack(spacing: theme.spacing(0.75)) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundStyle(theme.secondaryText)
+                    .foregroundStyle(theme.textTertiary)
                 TextField(
                     "",
                     text: Binding(
                         get: { model.filter.freeText ?? "" },
                         set: { model.setSearch($0) }
                     ),
-                    prompt: Text("Title…").foregroundStyle(theme.secondaryText)
+                    prompt: Text("Title…").foregroundStyle(theme.textTertiary)
                 )
                 .textFieldStyle(.plain)
-                .foregroundStyle(theme.primaryText)
+                .foregroundStyle(theme.textPrimary)
             }
             .font(theme.font(.body))
             .padding(.horizontal, theme.spacing(1))
             .padding(.vertical, theme.spacing(0.75))
-            .background(
-                RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
-                    .fill(theme.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
-                    .strokeBorder(theme.posterBorder, lineWidth: 1)
-            )
+            .miseField(theme)
         }
     }
 
@@ -66,7 +59,7 @@ struct FilterPanel: View {
             label("Rating")
             let lo = model.filter.ratingRange?.lowerBound.halfStars ?? 1
             let hi = model.filter.ratingRange?.upperBound.halfStars ?? 10
-            HStack(spacing: theme.spacing(0.5)) {
+            HStack(spacing: theme.spacing(1)) {
                 stepperPill(
                     title: "Min",
                     value: lo,
@@ -90,25 +83,24 @@ struct FilterPanel: View {
         VStack(alignment: .leading, spacing: theme.spacing(0.375)) {
             Text(title)
                 .font(theme.font(.caption))
-                .foregroundStyle(theme.secondaryText)
-            HStack(spacing: theme.spacing(0.5)) {
+                .foregroundStyle(theme.textSecondary)
+            HStack(spacing: theme.spacing(0.75)) {
                 Button(action: decrement) { Image(systemName: "minus") }
                     .buttonStyle(.plain)
+                    .foregroundStyle(theme.accent)
                 Text(Rating(halfStars: value)?.starString ?? "—")
                     .font(theme.font(.caption))
-                    .foregroundStyle(theme.primaryText)
+                    .foregroundStyle(theme.textPrimary)
+                    .lineLimit(1)
                     .frame(minWidth: theme.spacing(5), alignment: .center)
                 Button(action: increment) { Image(systemName: "plus") }
                     .buttonStyle(.plain)
+                    .foregroundStyle(theme.accent)
             }
             .font(.system(size: 10, weight: .bold))
-            .foregroundStyle(theme.accent)
-            .padding(.horizontal, theme.spacing(0.75))
-            .padding(.vertical, theme.spacing(0.5))
-            .background(
-                RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
-                    .fill(theme.surface)
-            )
+            .padding(.horizontal, theme.spacing(1))
+            .padding(.vertical, theme.spacing(0.75))
+            .miseField(theme)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -164,7 +156,8 @@ struct FilterPanel: View {
             label("Runtime")
             Text("Up to \(current.upperBound) min")
                 .font(theme.font(.caption))
-                .foregroundStyle(theme.primaryText)
+                .foregroundStyle(theme.textPrimary)
+                .lineLimit(1)
             Slider(
                 value: upper,
                 in: Double(bounds.lowerBound)...Double(bounds.upperBound)
@@ -192,7 +185,8 @@ struct FilterPanel: View {
             HStack {
                 Text(title)
                     .font(theme.font(.body))
-                    .foregroundStyle(theme.primaryText)
+                    .foregroundStyle(theme.textPrimary)
+                    .lineLimit(1)
                 Spacer()
                 Image(systemName: triStateSymbol(value))
                     .foregroundStyle(triStateColor(value))
@@ -212,7 +206,7 @@ struct FilterPanel: View {
 
     private func triStateColor(_ value: Bool?) -> Color {
         switch value {
-        case .none: return theme.secondaryText
+        case .none: return theme.textTertiary
         case .some(true): return theme.accent
         case .some(false): return theme.secondaryAccent
         }
@@ -223,7 +217,7 @@ struct FilterPanel: View {
     private func label(_ text: String) -> some View {
         Text(text.uppercased())
             .font(theme.font(.caption))
-            .foregroundStyle(theme.secondaryText)
+            .foregroundStyle(theme.textSecondary)
             .tracking(1.2)
     }
 
@@ -231,6 +225,6 @@ struct FilterPanel: View {
         Button("Clear", action: action)
             .buttonStyle(.plain)
             .font(theme.font(.caption))
-            .foregroundStyle(theme.secondaryAccent)
+            .foregroundStyle(theme.textSecondary)
     }
 }

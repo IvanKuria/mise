@@ -4,7 +4,9 @@ import MiseUI
 import WatchlistPlanner
 
 /// The hero of the screen: a large poster of tonight's pick, a "why" line, and a
-/// prominent Reroll button. Shows a themed empty state when nothing matches.
+/// prominent Reroll button. Designed to sit inside a translucent `miseCard`, so
+/// it carries no background of its own. Shows a themed empty state when nothing
+/// matches.
 struct TonightPickHero: View {
     @Environment(\.miseTheme) private var theme
     @Bindable var model: WatchlistModel
@@ -12,30 +14,15 @@ struct TonightPickHero: View {
     private let posterWidth: CGFloat = 200
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                .fill(heroGradient)
-                .overlay(
-                    RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                        .strokeBorder(theme.posterBorder.opacity(0.6), lineWidth: 1)
-                )
-
+        Group {
             if let pick = model.pick {
                 content(for: pick)
             } else {
                 emptyHero
             }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .animation(.snappy(duration: 0.28), value: model.pick)
-    }
-
-    private var heroGradient: LinearGradient {
-        LinearGradient(
-            colors: [theme.surface, theme.background],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
     }
 
     private func content(for pick: WatchlistItem) -> some View {
@@ -47,13 +34,13 @@ struct TonightPickHero: View {
             VStack(alignment: .leading, spacing: theme.spacing(1.5)) {
                 Text("TONIGHT'S PICK")
                     .font(theme.font(.caption))
-                    .tracking(1.4)
+                    .tracking(2.5)
                     .foregroundStyle(theme.accent)
 
                 Text(pick.film.name)
                     .font(theme.font(.largeTitle))
-                    .foregroundStyle(theme.primaryText)
-                    .lineLimit(3)
+                    .foregroundStyle(theme.textPrimary)
+                    .lineLimit(2)
                     .minimumScaleFactor(0.6)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -61,7 +48,8 @@ struct TonightPickHero: View {
                 if !meta.isEmpty {
                     Text(meta)
                         .font(theme.font(.body))
-                        .foregroundStyle(theme.secondaryText)
+                        .foregroundStyle(theme.textSecondary)
+                        .lineLimit(1)
                 }
 
                 if !pick.film.genres.isEmpty {
@@ -75,8 +63,8 @@ struct TonightPickHero: View {
                     ranking: model.ranking
                 ))
                 .font(theme.font(.body))
-                .italic()
-                .foregroundStyle(theme.secondaryAccent)
+                .foregroundStyle(theme.textSecondary)
+                .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
 
                 Spacer(minLength: theme.spacing())
@@ -85,7 +73,6 @@ struct TonightPickHero: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(theme.spacing(3))
     }
 
     private func genreChips(for film: Film) -> some View {
@@ -105,7 +92,7 @@ struct TonightPickHero: View {
                 Text("Reroll")
             }
             .font(theme.font(.headline))
-            .foregroundStyle(theme.background)
+            .foregroundStyle(theme.onSelection)
             .padding(.horizontal, theme.spacing(2))
             .padding(.vertical, theme.spacing(1.25))
             .background(

@@ -28,28 +28,42 @@ struct CompareLoaderView: View {
     }
 
     private var form: some View {
-        VStack(spacing: theme.spacing(2)) {
-            Image(systemName: "person.2.fill")
-                .font(.system(size: 44))
+        VStack(alignment: .leading, spacing: theme.spacing(2)) {
+            Text("TASTE MATCH")
+                .font(theme.font(.caption))
+                .tracking(2.5)
                 .foregroundStyle(theme.accent)
             Text("Compare with a friend")
-                .font(theme.font(.title))
-                .foregroundStyle(theme.primaryText)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(theme.textPrimary)
             Text("Enter another public Letterboxd handle to see where your tastes meet and clash.")
                 .font(theme.font(.body))
-                .foregroundStyle(theme.secondaryText)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 380)
+                .foregroundStyle(theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
 
-            HStack {
-                TextField("letterboxd.com / handle", text: $friendHandle)
-                    .textFieldStyle(.roundedBorder)
+            HStack(spacing: theme.spacing(1)) {
+                TextField("letterboxd.com/handle", text: $friendHandle)
+                    .textFieldStyle(.plain)
+                    .font(theme.font(.body))
+                    .foregroundStyle(theme.textPrimary)
+                    .padding(.horizontal, theme.spacing(1.5))
+                    .padding(.vertical, theme.spacing(1.25))
+                    .miseField(theme)
                     .onSubmit(load)
-                Button("Compare", action: load)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(friendHandle.trimmingCharacters(in: .whitespaces).isEmpty || phase == .loading)
+                Button(action: load) {
+                    Text("Compare")
+                        .font(theme.font(.headline))
+                        .foregroundStyle(theme.onSelection)
+                        .padding(.horizontal, theme.spacing(2))
+                        .padding(.vertical, theme.spacing(1.25))
+                        .background(
+                            RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
+                                .fill(theme.accent)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(friendHandle.trimmingCharacters(in: .whitespaces).isEmpty || phase == .loading)
             }
-            .frame(maxWidth: 380)
 
             if phase == .loading {
                 ProgressView().controlSize(.small)
@@ -57,12 +71,14 @@ struct CompareLoaderView: View {
             if case .failed(let message) = phase {
                 Text(message)
                     .font(theme.font(.caption))
-                    .foregroundStyle(.red)
+                    .foregroundStyle(theme.secondaryAccent)
             }
         }
-        .padding(theme.spacing(3))
+        .frame(maxWidth: 420, alignment: .leading)
+        .padding(theme.spacing(4))
+        .miseCard(theme)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(theme.background)
+        .background(.clear)
     }
 
     private func load() {

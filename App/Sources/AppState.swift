@@ -40,6 +40,12 @@ final class AppState {
         // can't be created (e.g. a sandboxed first run with no container yet).
         let store: any HistoryStoring = AppState.makeStore()
         self.library = LibraryController(store: store)
+
+        // Dev hook: deep-link to a section for screenshots (MISE_SECTION=browse).
+        if let name = ProcessInfo.processInfo.environment["MISE_SECTION"]?.lowercased(),
+           let match = Section.allCases.first(where: { $0.rawValue.lowercased() == name }) {
+            self.section = match
+        }
     }
 
     private static func makeStore() -> any HistoryStoring {

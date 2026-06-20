@@ -29,26 +29,31 @@ public struct CompareView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: theme.spacing(3)) {
-                header
+                hero
 
                 if model.hasOverlap {
+                    statBand
                     if model.hasDisagreements {
-                        disagreementsSection
+                        card { disagreementsSection }
                     }
-                    recommendationSection(
-                        title: "They loved, you haven’t seen",
-                        subtitle: model.other.displayName,
-                        films: model.forYou,
-                        emptySymbol: "eye",
-                        emptyMessage: "\(model.other.displayName) hasn’t loved anything new to you yet."
-                    )
-                    recommendationSection(
-                        title: "You loved, they haven’t seen",
-                        subtitle: model.me.displayName,
-                        films: model.forThem,
-                        emptySymbol: "eye",
-                        emptyMessage: "Nothing of yours \(model.other.displayName) is missing — yet."
-                    )
+                    card {
+                        recommendationSection(
+                            title: "They loved, you haven’t seen",
+                            subtitle: model.other.displayName,
+                            films: model.forYou,
+                            emptySymbol: "eye",
+                            emptyMessage: "\(model.other.displayName) hasn’t loved anything new to you yet."
+                        )
+                    }
+                    card {
+                        recommendationSection(
+                            title: "You loved, they haven’t seen",
+                            subtitle: model.me.displayName,
+                            films: model.forThem,
+                            emptySymbol: "eye",
+                            emptyMessage: "Nothing of yours \(model.other.displayName) is missing — yet."
+                        )
+                    }
                 } else {
                     EmptyStateView(
                         symbol: "person.2.slash",
@@ -58,38 +63,52 @@ public struct CompareView: View {
                     .frame(minHeight: 240)
                 }
             }
-            .padding(theme.spacing(3))
+            .padding(theme.spacing(4))
+            .frame(maxWidth: 980, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(theme.background)
+        .background(.clear)
     }
 
-    // MARK: - Header
+    /// Wraps a section in a translucent card for grouping and depth.
+    private func card<V: View>(@ViewBuilder _ content: () -> V) -> some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(theme.spacing(2.5))
+            .miseCard(theme)
+    }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: theme.spacing(2)) {
-            HStack(alignment: .center, spacing: theme.spacing(2)) {
-                MemberBadge(member: model.me, caption: "You")
-                Text("vs")
-                    .font(theme.font(.headline))
-                    .foregroundStyle(theme.secondaryText)
-                MemberBadge(member: model.other, caption: "@\(model.other.username)")
-                Spacer(minLength: 0)
-            }
+    // MARK: - Hero
 
-            HStack(alignment: .top, spacing: theme.spacing(2)) {
-                StatCard(
-                    title: "Taste affinity",
-                    value: model.affinityPercentText,
-                    caption: model.affinityCaption
-                )
-                StatCard(
-                    title: "Shared films",
-                    value: model.sharedFilmCountText,
-                    caption: "rated by both"
-                )
-            }
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: theme.spacing(0.75)) {
+            Text("TASTE MATCH")
+                .font(theme.font(.caption))
+                .tracking(2.5)
+                .foregroundStyle(theme.accent)
+            Text("You vs \(model.other.displayName)")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(theme.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
+        .padding(.bottom, theme.spacing(0.5))
+    }
+
+    // MARK: - Headline metrics
+
+    private var statBand: some View {
+        StatBand([
+            StatItem(
+                value: model.affinityPercentText,
+                label: model.affinityCaption,
+                emphasis: true
+            ),
+            StatItem(
+                value: model.sharedFilmCountText,
+                label: "Shared films"
+            ),
+        ])
     }
 
     // MARK: - Disagreements
@@ -108,7 +127,7 @@ public struct CompareView: View {
         }
     }
 
-    // MARK: - Recommendation poster rows
+    // MARK: - Recommendation poster shelves
 
     @ViewBuilder
     private func recommendationSection(
@@ -134,61 +153,6 @@ public struct CompareView: View {
     }
 }
 
-// MARK: - Member badge
-
-/// A circular avatar (or themed monogram fallback) with name and caption.
-struct MemberBadge: View {
-    @Environment(\.miseTheme) private var theme
-
-    let member: MemberSummary
-    let caption: String
-
-    private var monogram: String {
-        String(member.displayName.first.map(String.init) ?? "?").uppercased()
-    }
-
-    var body: some View {
-        HStack(spacing: theme.spacing()) {
-            avatar
-            VStack(alignment: .leading, spacing: 0) {
-                Text(member.displayName)
-                    .font(theme.font(.headline))
-                    .foregroundStyle(theme.primaryText)
-                    .lineLimit(1)
-                Text(caption)
-                    .font(theme.font(.caption))
-                    .foregroundStyle(theme.secondaryText)
-                    .lineLimit(1)
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var avatar: some View {
-        ZStack {
-            Circle().fill(theme.surface)
-            Circle().strokeBorder(theme.posterBorder, lineWidth: 1)
-            if let url = member.avatarURL {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    monogramText
-                }
-                .clipShape(Circle())
-            } else {
-                monogramText
-            }
-        }
-        .frame(width: 44, height: 44)
-    }
-
-    private var monogramText: some View {
-        Text(monogram)
-            .font(theme.font(.headline))
-            .foregroundStyle(theme.accent)
-    }
-}
-
 // MARK: - Disagreement row
 
 /// One shared film with the two members' ratings two-up and the signed delta
@@ -199,6 +163,14 @@ struct DisagreementRow: View {
     let disagreement: RatingDisagreement
     let deltaLabel: String
 
+    /// Positive deltas (you rated it higher) lean accent; negative (they did)
+    /// lean secondary accent — a quick read of who loved it more.
+    private var deltaTint: Color {
+        disagreement.ratingA.stars >= disagreement.ratingB.stars
+            ? theme.accent
+            : theme.secondaryAccent
+    }
+
     var body: some View {
         HStack(spacing: theme.spacing(1.5)) {
             FilmPosterView(film: disagreement.film, width: 48)
@@ -206,11 +178,13 @@ struct DisagreementRow: View {
             VStack(alignment: .leading, spacing: theme.spacing(0.5)) {
                 Text(disagreement.film.name)
                     .font(theme.font(.body))
-                    .foregroundStyle(theme.primaryText)
+                    .foregroundStyle(theme.textPrimary)
                     .lineLimit(1)
                 HStack(spacing: theme.spacing()) {
                     ratingColumn(label: "You", rating: disagreement.ratingA)
-                    Divider().frame(height: 18)
+                    Rectangle()
+                        .fill(theme.hairline)
+                        .frame(width: 1, height: 18)
                     ratingColumn(label: "Them", rating: disagreement.ratingB)
                 }
             }
@@ -221,12 +195,12 @@ struct DisagreementRow: View {
         }
         .padding(theme.spacing())
         .background(
-            RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                .fill(theme.surface)
+            RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
+                .fill(theme.recess)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                .strokeBorder(theme.posterBorder.opacity(0.6), lineWidth: 1)
+            RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
+                .strokeBorder(theme.hairline, lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
@@ -238,8 +212,9 @@ struct DisagreementRow: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label.uppercased())
                 .font(theme.font(.caption))
-                .tracking(0.6)
-                .foregroundStyle(theme.secondaryText)
+                .tracking(1.4)
+                .foregroundStyle(theme.textTertiary)
+                .lineLimit(1)
             StarRatingView(rating: rating, starSize: 13)
         }
     }
@@ -248,12 +223,13 @@ struct DisagreementRow: View {
         Text(deltaLabel)
             .font(theme.font(.headline))
             .monospacedDigit()
-            .foregroundStyle(theme.accent)
+            .foregroundStyle(deltaTint)
+            .lineLimit(1)
             .padding(.horizontal, theme.spacing())
             .padding(.vertical, theme.spacing(0.5))
             .background(
                 RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
-                    .fill(theme.accent.opacity(0.12))
+                    .fill(deltaTint.opacity(0.12))
             )
             .accessibilityHidden(true)
     }

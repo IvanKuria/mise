@@ -15,26 +15,52 @@ public struct BrowseView: View {
     }
 
     public var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            FilterPanel(model: model)
-                .frame(width: 280)
-                .background(theme.surface.opacity(0.4))
-
-            Divider().overlay(theme.posterBorder)
-
-            resultsColumn
+        ScrollView {
+            VStack(alignment: .leading, spacing: theme.spacing(3)) {
+                hero
+                card { FilterPanel(model: model) }
+                card { resultsSection }
+            }
+            .padding(theme.spacing(4))
+            .frame(maxWidth: 980, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(theme.background)
+        .background(.clear)
     }
 
-    private var resultsColumn: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            resultsHeader
-                .padding(.horizontal, theme.spacing(2))
-                .padding(.top, theme.spacing(2))
-                .padding(.bottom, theme.spacing(1.5))
+    /// Wraps a section in a translucent card for grouping and depth.
+    private func card<V: View>(@ViewBuilder _ content: () -> V) -> some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(theme.spacing(2.5))
+            .miseCard(theme)
+    }
 
-            Divider().overlay(theme.posterBorder)
+    // MARK: - Sections
+
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: theme.spacing(0.75)) {
+            Text("YOUR FILMS")
+                .font(theme.font(.caption))
+                .tracking(2.5)
+                .foregroundStyle(theme.accent)
+            Text("Browse")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(theme.textPrimary)
+        }
+        .padding(.bottom, theme.spacing(0.5))
+    }
+
+    private var resultsSection: some View {
+        VStack(alignment: .leading, spacing: theme.spacing(2)) {
+            HStack(alignment: .firstTextBaseline, spacing: theme.spacing(1.25)) {
+                SectionHeader(countTitle)
+                sortMenu
+            }
+
+            if !model.activeFilterChips.isEmpty {
+                activeFilters
+            }
 
             if model.results.isEmpty {
                 EmptyStateView(
@@ -45,54 +71,41 @@ public struct BrowseView: View {
                         : "Films you log will show up here as a poster wall."
                 )
             } else {
-                ScrollView {
-                    PosterWallView(films: model.resultFilms, style: .grid)
-                        .padding(theme.spacing(2))
-                }
+                PosterWallView(films: model.resultFilms, style: .grid)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    private var resultsHeader: some View {
-        VStack(alignment: .leading, spacing: theme.spacing(1.25)) {
-            HStack(alignment: .firstTextBaseline) {
-                SectionHeader("Browse", subtitle: countSubtitle)
-                Spacer(minLength: theme.spacing())
-                sortMenu
-            }
-
-            if !model.activeFilterChips.isEmpty {
-                FlowLayout(spacing: theme.spacing(0.75)) {
-                    ForEach(model.activeFilterChips) { chip in
-                        Button {
-                            model.clear(chip.kind)
-                        } label: {
-                            HStack(spacing: theme.spacing(0.375)) {
-                                Text(chip.label)
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 8, weight: .bold))
-                            }
-                            .font(theme.font(.caption))
-                            .foregroundStyle(theme.background)
-                            .padding(.horizontal, theme.spacing(1.25))
-                            .padding(.vertical, theme.spacing(0.625))
-                            .background(Capsule(style: .continuous).fill(theme.accent))
-                        }
-                        .buttonStyle(.plain)
-                        .help("Remove filter")
+    private var activeFilters: some View {
+        FlowLayout(spacing: theme.spacing(0.75)) {
+            ForEach(model.activeFilterChips) { chip in
+                Button {
+                    model.clear(chip.kind)
+                } label: {
+                    HStack(spacing: theme.spacing(0.375)) {
+                        Text(chip.label)
+                            .lineLimit(1)
+                        Image(systemName: "xmark")
+                            .font(.system(size: 8, weight: .bold))
                     }
-
-                    Button("Clear all") { model.clearFilters() }
-                        .buttonStyle(.plain)
-                        .font(theme.font(.caption))
-                        .foregroundStyle(theme.secondaryAccent)
+                    .font(theme.font(.caption))
+                    .foregroundStyle(theme.onSelection)
+                    .padding(.horizontal, theme.spacing(1.25))
+                    .padding(.vertical, theme.spacing(0.625))
+                    .background(Capsule(style: .continuous).fill(theme.selectionFill))
                 }
+                .buttonStyle(.plain)
+                .help("Remove filter")
             }
+
+            Button("Clear all") { model.clearFilters() }
+                .buttonStyle(.plain)
+                .font(theme.font(.caption))
+                .foregroundStyle(theme.textSecondary)
         }
     }
 
-    private var countSubtitle: String {
+    private var countTitle: String {
         let n = model.resultCount
         let total = model.entries.count
         if model.hasActiveFilter {
@@ -118,17 +131,13 @@ public struct BrowseView: View {
             HStack(spacing: theme.spacing(0.5)) {
                 Image(systemName: "arrow.up.arrow.down")
                 Text(model.sort.displayName)
+                    .lineLimit(1)
             }
             .font(theme.font(.caption))
-            .foregroundStyle(theme.primaryText)
+            .foregroundStyle(theme.textPrimary)
             .padding(.horizontal, theme.spacing(1.25))
             .padding(.vertical, theme.spacing(0.625))
-            .background(
-                Capsule(style: .continuous).fill(theme.surface)
-            )
-            .overlay(
-                Capsule(style: .continuous).strokeBorder(theme.posterBorder, lineWidth: 1)
-            )
+            .miseField(theme)
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)

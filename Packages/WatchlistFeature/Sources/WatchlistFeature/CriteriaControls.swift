@@ -13,7 +13,7 @@ struct CriteriaControls: View {
         VStack(alignment: .leading, spacing: theme.spacing(2)) {
             HStack(alignment: .firstTextBaseline) {
                 SectionHeader("Your mood")
-                Spacer()
+                Spacer(minLength: theme.spacing())
                 if model.hasActiveCriteria {
                     Button("Clear") { model.clearCriteria() }
                         .buttonStyle(.plain)
@@ -36,15 +36,7 @@ struct CriteriaControls: View {
 
             ratingControl
         }
-        .padding(theme.spacing(2.5))
-        .background(
-            RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                .fill(theme.surface.opacity(0.5))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                .strokeBorder(theme.posterBorder.opacity(0.4), lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Ranking
@@ -136,8 +128,8 @@ struct CriteriaControls: View {
         VStack(alignment: .leading, spacing: theme.spacing(0.75)) {
             Text(label.uppercased())
                 .font(theme.font(.caption))
-                .tracking(0.8)
-                .foregroundStyle(theme.secondaryText)
+                .tracking(1.4)
+                .foregroundStyle(theme.textTertiary)
             content()
         }
     }
