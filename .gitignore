@@ -1,0 +1,12 @@
+.DS_Store
+.build/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+.swiftpm/
+xcuserdata/
+*.swiftpm
+# Secrets — never commit API keys
+Secrets.xcconfig
+secrets.json
+.env

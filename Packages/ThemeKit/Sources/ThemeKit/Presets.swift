@@ -1,0 +1,96 @@
+import Foundation
+
+extension Theme {
+    /// Convenience for building preset palettes from known-good hex strings.
+    /// Force-unwraps are safe here because the literals are compile-time constants
+    /// validated by the preset test suite.
+    private static func color(_ hex: String) -> RGBAColor {
+        guard let c = RGBAColor(hex: hex) else {
+            preconditionFailure("Invalid preset hex literal: \(hex)")
+        }
+        return c
+    }
+
+    /// Monochrome, high-contrast, cinema-dark.
+    public static let noir = Theme(
+        id: "builtin.noir",
+        name: "Noir",
+        palette: Palette(
+            background: color("#0B0B0C"),
+            surface: color("#161617"),
+            primaryText: color("#F5F5F5"),
+            secondaryText: color("#9A9A9C"),
+            accent: color("#E8E8E8"),
+            secondaryAccent: color("#6E6E70"),
+            posterBorder: color("#2A2A2C"),
+            posterShadow: color("#000000B3")
+        ),
+        typography: Typography(family: .serif, sizeScale: 1.0),
+        layoutDensity: .standard,
+        posterWallStyle: .grid,
+        widgetSkin: .poster
+    )
+
+    /// Saturated, bold, candy-colored.
+    public static let technicolor = Theme(
+        id: "builtin.technicolor",
+        name: "Technicolor",
+        palette: Palette(
+            background: color("#12022B"),
+            surface: color("#22074A"),
+            primaryText: color("#FFFFFF"),
+            secondaryText: color("#C9A8FF"),
+            accent: color("#FF2E97"),
+            secondaryAccent: color("#22D3EE"),
+            posterBorder: color("#FF8A00"),
+            posterShadow: color("#FF2E9799")
+        ),
+        typography: Typography(family: .roundedSans, sizeScale: 1.05),
+        layoutDensity: .comfortable,
+        posterWallStyle: .wall,
+        widgetSkin: .filmstrip
+    )
+
+    /// Clean, restrained, light editorial look.
+    public static let criterion = Theme(
+        id: "builtin.criterion",
+        name: "Criterion",
+        palette: Palette(
+            background: color("#FBFAF7"),
+            surface: color("#FFFFFF"),
+            primaryText: color("#1A1A1A"),
+            secondaryText: color("#6B6B6B"),
+            accent: color("#1F4E8C"),
+            secondaryAccent: color("#C0392B"),
+            posterBorder: color("#E2DFD8"),
+            posterShadow: color("#0000001A")
+        ),
+        typography: Typography(family: .serif, sizeScale: 1.0),
+        layoutDensity: .standard,
+        posterWallStyle: .justified,
+        widgetSkin: .minimal
+    )
+
+    /// Green-on-black terminal ricing.
+    public static let terminal = Theme(
+        id: "builtin.terminal",
+        name: "Terminal",
+        palette: Palette(
+            background: color("#000000"),
+            surface: color("#0A140A"),
+            primaryText: color("#33FF66"),
+            secondaryText: color("#1F9E3D"),
+            accent: color("#33FF66"),
+            secondaryAccent: color("#A6FF00"),
+            posterBorder: color("#0F3D17"),
+            posterShadow: color("#33FF6640")
+        ),
+        typography: Typography(family: .monospace, sizeScale: 0.95),
+        layoutDensity: .compact,
+        posterWallStyle: .shelf,
+        widgetSkin: .stats
+    )
+
+    /// All built-in presets, in display order.
+    public static let allBuiltIn: [Theme] = [noir, technicolor, criterion, terminal]
+}
