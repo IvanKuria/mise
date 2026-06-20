@@ -6,6 +6,8 @@ DerivedData/
 .swiftpm/
 xcuserdata/
 *.swiftpm
+# XcodeGen generates the project from App/project.yml — run `xcodegen generate`
+*.xcodeproj/
 # Secrets — never commit API keys
 Secrets.xcconfig
 secrets.json
