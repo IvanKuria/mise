@@ -49,62 +49,56 @@ public struct DashboardView: View {
                 content
             }
         }
-        .background(theme.background.ignoresSafeArea())
+        .background(.clear)
     }
 
     private var content: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: theme.spacing(4)) {
+            VStack(alignment: .leading, spacing: theme.spacing(3)) {
                 headline
-                headlineCards
-                ratingsSection
-                heatmapSection
-                breakdownsSection
-                peopleSection
-                hottestTakesSection
+                statBand
+                card { ratingsSection }
+                card { heatmapSection }
+                card { breakdownsSection }
+                card { peopleSection }
+                if !stats.hottestTakes.isEmpty { card { hottestTakesSection } }
             }
             .padding(theme.spacing(4))
+            .frame(maxWidth: 980, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// Wraps a section in a translucent card for grouping and depth.
+    private func card<V: View>(@ViewBuilder _ content: () -> V) -> some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(theme.spacing(2.5))
+            .miseCard(theme)
     }
 
     // MARK: - Sections
 
     private var headline: some View {
-        VStack(alignment: .leading, spacing: theme.spacing(0.5)) {
-            Text(displayName.isEmpty ? "Your year in film" : "\(displayName)'s year in film")
-                .font(theme.font(.largeTitle))
-                .foregroundStyle(theme.primaryText)
-            Text("A look across everything you've logged.")
-                .font(theme.font(.body))
-                .foregroundStyle(theme.secondaryText)
+        VStack(alignment: .leading, spacing: theme.spacing(0.75)) {
+            Text("YOUR YEAR IN FILM")
+                .font(theme.font(.caption))
+                .tracking(2.5)
+                .foregroundStyle(theme.accent)
+            Text(displayName.isEmpty ? "Your archive" : displayName)
+                .font(.system(size: 38, weight: .bold))
+                .foregroundStyle(theme.textPrimary)
         }
+        .padding(.bottom, theme.spacing(0.5))
     }
 
-    private var headlineCards: some View {
-        let columns = [GridItem(.adaptive(minimum: 160), spacing: theme.spacing(2))]
-        return LazyVGrid(columns: columns, spacing: theme.spacing(2)) {
-            StatCard(
-                title: "Films logged",
-                value: DashboardFormat.count(stats.totalLogged),
-                caption: "\(DashboardFormat.count(stats.distinctFilmCount)) unique"
-            )
-            StatCard(
-                title: "Days of runtime",
-                value: DashboardFormat.runtimeDays(minutes: stats.totalRuntimeMinutes),
-                caption: DashboardFormat.runtimeHoursCaption(minutes: stats.totalRuntimeMinutes)
-            )
-            StatCard(
-                title: "Average rating",
-                value: DashboardFormat.averageStarsLabel(DashboardFormat.averageStars(histogram: stats.ratingsHistogram)),
-                caption: "\(DashboardFormat.count(stats.likedCount)) liked"
-            )
-            StatCard(
-                title: "Contrarian score",
-                value: DashboardFormat.contrarianLabel(stats.contrarianScore),
-                caption: DashboardFormat.contrarianCaption(stats.contrarianScore)
-            )
-        }
+    private var statBand: some View {
+        StatBand([
+            StatItem(value: DashboardFormat.count(stats.totalLogged), label: "Films logged"),
+            StatItem(value: DashboardFormat.runtimeDays(minutes: stats.totalRuntimeMinutes), unit: "days", label: "Runtime"),
+            StatItem(value: DashboardFormat.averageStarsLabel(DashboardFormat.averageStars(histogram: stats.ratingsHistogram)), label: "Avg rating"),
+            StatItem(value: DashboardFormat.contrarianLabel(stats.contrarianScore), label: "vs crowd", emphasis: true),
+        ])
     }
 
     private var ratingsSection: some View {

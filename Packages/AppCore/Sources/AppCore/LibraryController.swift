@@ -117,6 +117,13 @@ public final class LibraryController {
         }
     }
 
+    /// Loads a ready-made history directly (used by the built-in demo, and tests).
+    public func loadSample(_ history: WatchHistory) {
+        self.history = history
+        self.progress = 1
+        self.phase = .done
+    }
+
     // MARK: - Progress mapping
 
     /// Maps a coarse `SyncProgress` stage onto `phase` and a 0...1 fraction.

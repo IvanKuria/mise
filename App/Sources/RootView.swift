@@ -18,9 +18,18 @@ struct RootView: View {
         }
         .miseTheme(app.themeModel.theme)
         .miseWindowChrome()
+        .onAppear {
+            if ProcessInfo.processInfo.environment["MISE_DEMO"] == "1", app.library.history == nil {
+                app.library.loadSample(SampleData.history())
+            }
+        }
     }
 
     private func startLoad(handle: String, tmdbKey: String?) {
+        if handle.lowercased() == "demo" {
+            app.library.loadSample(SampleData.history())
+            return
+        }
         Task {
             onboarding.status = .syncing(progress: 0, message: "Reading your films…")
             await app.library.load(handle: handle, tmdbKey: tmdbKey)
