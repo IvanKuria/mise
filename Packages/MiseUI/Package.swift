@@ -15,6 +15,7 @@ let package = Package(
         .target(
             name: "MiseUI",
             dependencies: ["ThemeKit", "MiseCore"],
+            resources: [.copy("Resources/Fonts")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(

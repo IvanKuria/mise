@@ -91,6 +91,27 @@ extension Theme {
         widgetSkin: .stats
     )
 
+    /// Archival film-program look: warm film-stock paper, ink, oxblood + aged gold.
+    /// The default identity — quiet, editorial, poster-forward.
+    public static let repertory = Theme(
+        id: "builtin.repertory",
+        name: "Repertory",
+        palette: Palette(
+            background: color("#E4DFD2"),
+            surface: color("#EFEBE0"),
+            primaryText: color("#1A1714"),
+            secondaryText: color("#6B6256"),
+            accent: color("#7A1F2B"),
+            secondaryAccent: color("#9C7A3C"),
+            posterBorder: color("#1A1714"),
+            posterShadow: color("#1A171426")
+        ),
+        typography: Typography(family: .serif, sizeScale: 1.0),
+        layoutDensity: .standard,
+        posterWallStyle: .justified,
+        widgetSkin: .minimal
+    )
+
     /// All built-in presets, in display order.
-    public static let allBuiltIn: [Theme] = [noir, technicolor, criterion, terminal]
+    public static let allBuiltIn: [Theme] = [repertory, noir, technicolor, criterion, terminal]
 }

@@ -1,21 +1,15 @@
 import SwiftUI
 import MiseUI
-import MiseCore
 
-/// The first-run experience: a cinematic, centered card floating over a dimmed
-/// poster mosaic. The user enters their public Letterboxd handle (and optionally
-/// a free TMDB API key) and watches sync progress.
-///
-/// The host app provides `onSubmit(handle, tmdbKey)` and is responsible for
-/// driving `model.status` as the sync proceeds.
+/// First-run experience, styled as a printed repertory-cinema program: a framed
+/// paper card with a catalogue header, editorial display type, and ledger-style
+/// fields. The host app provides `onSubmit(handle, tmdbKey)` and drives
+/// `model.status` as the sync proceeds.
 public struct OnboardingView: View {
     @Environment(\.miseTheme) private var theme
 
     @Bindable private var model: OnboardingModel
     private let onSubmit: (String, String?) -> Void
-
-    /// Sample films used to paint the ambient background mosaic.
-    private let backdropFilms: [Film]
 
     public init(
         model: OnboardingModel,
@@ -23,102 +17,128 @@ public struct OnboardingView: View {
     ) {
         self._model = Bindable(model)
         self.onSubmit = onSubmit
-        self.backdropFilms = MiseUIPreviewData.films
     }
 
     public var body: some View {
         ZStack {
-            background
-            card
-                .frame(maxWidth: 460)
-                .padding(theme.spacing(3))
+            paper
+            program
+                .frame(maxWidth: 540)
+                .padding(theme.spacing(4))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.background)
     }
 
-    // MARK: Background mosaic
+    // MARK: Paper ground
 
-    private var background: some View {
-        ZStack {
-            // A dense, gapless wall of posters as ambient texture.
-            PosterWallView(films: backdropFilms + backdropFilms, style: .wall)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .clipped()
-                .blur(radius: 8)
-                .opacity(0.35)
-                .accessibilityHidden(true)
-
-            // A cinematic vignette so the card always reads clearly.
-            LinearGradient(
-                colors: [
-                    theme.background.opacity(0.55),
-                    theme.background.opacity(0.92),
-                    theme.background,
-                ],
-                startPoint: .top,
-                endPoint: .bottom
+    private var paper: some View {
+        LinearGradient(
+            colors: [
+                theme.surface,
+                theme.background,
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .overlay(alignment: .top) {
+            // A faint warm bloom at the top, like a page under a reading lamp.
+            RadialGradient(
+                colors: [theme.secondaryAccent.opacity(0.10), .clear],
+                center: .top, startRadius: 0, endRadius: 460
             )
-            .accessibilityHidden(true)
         }
         .ignoresSafeArea()
+        .accessibilityHidden(true)
     }
 
-    // MARK: The card
+    // MARK: The program card
 
-    private var card: some View {
-        VStack(spacing: theme.spacing(3)) {
-            header
-            switch model.status {
-            case .syncing(let progress, let message):
-                syncing(progress: progress, message: message)
-            default:
-                form
+    private var program: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            masthead
+            DoubleRule(color: theme.primaryText)
+                .padding(.top, theme.spacing(1.5))
+                .padding(.bottom, theme.spacing(2.5))
+
+            Group {
+                if case .syncing(let progress, let message) = model.status {
+                    syncing(progress: progress, message: message)
+                } else {
+                    formBody
+                }
             }
+
+            colophon
+                .padding(.top, theme.spacing(3))
         }
-        .padding(theme.spacing(3.5))
-        .background(
-            RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                .fill(theme.surface.opacity(0.96))
+        .padding(theme.spacing(4))
+        .background(theme.surface)
+        .overlay(
+            Rectangle().strokeBorder(theme.primaryText.opacity(0.85), lineWidth: 1)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
-                .strokeBorder(theme.posterBorder.opacity(0.7), lineWidth: 1)
+            // Inner hairline, the second rule of a printed cover.
+            Rectangle()
+                .strokeBorder(theme.primaryText.opacity(0.35), lineWidth: 1)
+                .padding(5)
         )
-        .shadow(color: theme.posterShadow, radius: 30, x: 0, y: 16)
+        .shadow(color: theme.posterShadow, radius: 28, x: 0, y: 18)
     }
 
-    private var header: some View {
-        VStack(spacing: theme.spacing(0.75)) {
-            Image(systemName: "film.stack")
-                .font(.system(size: 40, weight: .light))
-                .foregroundStyle(theme.accent)
-            Text("Welcome to Mise")
+    private var masthead: some View {
+        HStack(alignment: .center, spacing: theme.spacing(1.5)) {
+            FilmFrameMark(color: theme.primaryText)
+                .frame(width: 26, height: 34)
+            Text("MISE")
                 .font(theme.font(.largeTitle))
+                .tracking(2)
                 .foregroundStyle(theme.primaryText)
-            Text("Enter your public Letterboxd handle to load your films.")
-                .font(theme.font(.body))
+            Spacer(minLength: 0)
+            Text("UNOFFICIAL\nLETTERBOXD ALMANAC")
+                .font(theme.font(.caption))
+                .tracking(1.5)
+                .lineSpacing(2)
+                .multilineTextAlignment(.trailing)
                 .foregroundStyle(theme.secondaryText)
-                .multilineTextAlignment(.center)
         }
     }
 
-    // MARK: Form state
+    // MARK: Form
 
-    private var form: some View {
-        VStack(alignment: .leading, spacing: theme.spacing(2)) {
-            handleField
-            tmdbField
+    private var formBody: some View {
+        VStack(alignment: .leading, spacing: theme.spacing(2.5)) {
+            VStack(alignment: .leading, spacing: theme.spacing(1)) {
+                Text("NO. 001 · FIRST EDITION")
+                    .font(theme.font(.caption))
+                    .tracking(2)
+                    .foregroundStyle(theme.accent)
+                Text("Your films,\ncatalogued.")
+                    .font(theme.font(.largeTitle))
+                    .lineSpacing(2)
+                    .foregroundStyle(theme.primaryText)
+                Text("Enter a public Letterboxd handle. Mise reads your diary, ratings, and watchlist into a private archive that lives on your Mac.")
+                    .font(theme.font(.body))
+                    .lineSpacing(3)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            VStack(alignment: .leading, spacing: theme.spacing(2)) {
+                handleField
+                tmdbField
+            }
+
             if case .failed(let message) = model.status {
                 failureNote(message)
             }
+
             submitButton
         }
     }
 
     private var handleField: some View {
-        VStack(alignment: .leading, spacing: theme.spacing(0.5)) {
-            fieldLabel("Letterboxd handle")
+        ledgerField(label: "Letterboxd handle") {
             HStack(spacing: theme.spacing(0.5)) {
                 Text("letterboxd.com/")
                     .font(theme.font(.mono))
@@ -131,97 +151,101 @@ public struct OnboardingView: View {
                     .foregroundStyle(theme.primaryText)
                     .onSubmit(submit)
             }
-            .padding(theme.spacing(1.25))
-            .background(fieldBackground)
         }
     }
 
     private var tmdbField: some View {
-        VStack(alignment: .leading, spacing: theme.spacing(0.5)) {
-            fieldLabel("TMDB API key — optional")
-            SecureField("Paste to enrich posters & metadata", text: $model.tmdbKey)
-                .textFieldStyle(.plain)
-                .font(theme.font(.mono))
-                .foregroundStyle(theme.primaryText)
-                .padding(theme.spacing(1.25))
-                .background(fieldBackground)
-                .onSubmit(submit)
-            Text("Free and instant from themoviedb.org. Skip it to start without metadata.")
+        VStack(alignment: .leading, spacing: theme.spacing(0.75)) {
+            ledgerField(label: "The Movie Database key — optional") {
+                SecureField("paste to unlock posters", text: $model.tmdbKey)
+                    .textFieldStyle(.plain)
+                    .font(theme.font(.mono))
+                    .foregroundStyle(theme.primaryText)
+                    .onSubmit(submit)
+            }
+            Text("Unlocks posters, genres & runtimes. Free and instant at themoviedb.org.")
                 .font(theme.font(.caption))
-                .foregroundStyle(theme.secondaryAccent)
+                .foregroundStyle(theme.secondaryText)
         }
     }
 
     private var submitButton: some View {
         Button(action: submit) {
-            Text("Load my films")
-                .font(theme.font(.headline))
-                .foregroundStyle(model.canSubmit ? theme.background : theme.secondaryText)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, theme.spacing(1.25))
-                .background(
-                    RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
-                        .fill(model.canSubmit ? theme.accent : theme.surface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
-                        .strokeBorder(theme.posterBorder.opacity(0.6), lineWidth: model.canSubmit ? 0 : 1)
-                )
+            HStack(spacing: theme.spacing(1)) {
+                Text("Load my films")
+                    .font(theme.font(.headline))
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 13, weight: .semibold))
+            }
+            .foregroundStyle(theme.surface)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, theme.spacing(1.5))
+            .background(model.canSubmit ? theme.accent : theme.secondaryText.opacity(0.4))
         }
         .buttonStyle(.plain)
         .disabled(!model.canSubmit)
         .animation(.easeInOut(duration: 0.15), value: model.canSubmit)
     }
 
-    // MARK: Syncing state
+    // MARK: Syncing
 
     private func syncing(progress: Double, message: String) -> some View {
-        VStack(spacing: theme.spacing(2)) {
-            ProgressView(value: progress.clamped01)
-                .progressViewStyle(.linear)
-                .tint(theme.accent)
-            HStack {
-                Text(message)
-                    .font(theme.font(.body))
-                    .foregroundStyle(theme.primaryText)
-                Spacer(minLength: theme.spacing())
-                Text(progress.percentText)
-                    .font(theme.font(.mono))
-                    .foregroundStyle(theme.secondaryText)
-                    .monospacedDigit()
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func failureNote(_ message: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: theme.spacing(0.75)) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(theme.secondaryAccent)
-            Text(message)
+        VStack(alignment: .leading, spacing: theme.spacing(2)) {
+            Text("NOW READING")
                 .font(theme.font(.caption))
-                .foregroundStyle(theme.secondaryAccent)
-                .fixedSize(horizontal: false, vertical: true)
+                .tracking(2)
+                .foregroundStyle(theme.accent)
+            Text(message)
+                .font(theme.font(.title))
+                .foregroundStyle(theme.primaryText)
+            ProgressBar(value: progress, track: theme.primaryText.opacity(0.15), fill: theme.accent)
+                .frame(height: 3)
+            Text(progress.percentText + " catalogued")
+                .font(theme.font(.mono))
+                .foregroundStyle(theme.secondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: Helpers
-
-    private func fieldLabel(_ text: String) -> some View {
-        Text(text.uppercased())
-            .font(theme.font(.caption))
-            .tracking(0.8)
-            .foregroundStyle(theme.secondaryText)
+    private func failureNote(_ message: String) -> some View {
+        Text(message)
+            .font(theme.font(.body))
+            .foregroundStyle(theme.accent)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(theme.spacing(1.25))
+            .overlay(Rectangle().strokeBorder(theme.accent.opacity(0.5), lineWidth: 1))
     }
 
-    private var fieldBackground: some View {
-        RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
-            .fill(theme.background.opacity(0.6))
-            .overlay(
-                RoundedRectangle(cornerRadius: theme.smallCornerRadius, style: .continuous)
-                    .strokeBorder(theme.posterBorder.opacity(0.6), lineWidth: 1)
-            )
+    private var colophon: some View {
+        VStack(alignment: .leading, spacing: theme.spacing(1.25)) {
+            Rule(color: theme.primaryText.opacity(0.25))
+            Text("MISE · MMXXVI — NOT AFFILIATED WITH LETTERBOXD")
+                .font(theme.font(.caption))
+                .tracking(1.5)
+                .foregroundStyle(theme.secondaryText)
+        }
+    }
+
+    // MARK: Helpers
+
+    private func ledgerField<Content: View>(
+        label: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: theme.spacing(0.75)) {
+            Text(label.uppercased())
+                .font(theme.font(.caption))
+                .tracking(1.5)
+                .foregroundStyle(theme.secondaryText)
+            content()
+                .padding(.vertical, theme.spacing(1))
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(theme.primaryText.opacity(0.5))
+                        .frame(height: 1)
+                }
+        }
     }
 
     private func submit() {
@@ -230,40 +254,98 @@ public struct OnboardingView: View {
     }
 }
 
-private extension Double {
-    /// Clamped into `0...1` for progress display.
-    var clamped01: Double { Swift.min(1, Swift.max(0, self)) }
+// MARK: - Signature marks & rules
 
-    /// A rounded whole-percent string, e.g. `"42%"`.
+/// A small drawn filmstrip — the app's mark, deliberately not an SF Symbol.
+private struct FilmFrameMark: View {
+    var color: Color
+
+    var body: some View {
+        Canvas { ctx, size in
+            let w = size.width, h = size.height
+            let stripInset = w * 0.22
+            // Frame outline.
+            ctx.stroke(
+                Path(CGRect(x: 0.5, y: 0.5, width: w - 1, height: h - 1)),
+                with: .color(color), lineWidth: 1.2
+            )
+            // Sprocket holes down both edges.
+            let holeW = stripInset * 0.5
+            let holeH = h / 9
+            for i in 0..<4 {
+                let y = h * (0.12 + Double(i) * 0.25)
+                for x in [stripInset * 0.25, w - stripInset * 0.75] {
+                    ctx.fill(
+                        Path(roundedRect: CGRect(x: x, y: y, width: holeW, height: holeH), cornerRadius: 1),
+                        with: .color(color)
+                    )
+                }
+            }
+            // Central frame line.
+            ctx.stroke(
+                Path { p in
+                    p.move(to: CGPoint(x: stripInset, y: h / 2))
+                    p.addLine(to: CGPoint(x: w - stripInset, y: h / 2))
+                },
+                with: .color(color.opacity(0.5)), lineWidth: 1
+            )
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// A single printed hairline.
+private struct Rule: View {
+    var color: Color
+    var body: some View { Rectangle().fill(color).frame(height: 1) }
+}
+
+/// A printed double rule (thick over thin), like a program cover.
+private struct DoubleRule: View {
+    var color: Color
+    var body: some View {
+        VStack(spacing: 2) {
+            Rectangle().fill(color.opacity(0.85)).frame(height: 2)
+            Rectangle().fill(color.opacity(0.5)).frame(height: 1)
+        }
+    }
+}
+
+/// A flat, square-cornered progress bar (no rounded chrome) in the printed style.
+private struct ProgressBar: View {
+    var value: Double
+    var track: Color
+    var fill: Color
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(track)
+                Rectangle().fill(fill)
+                    .frame(width: geo.size.width * value.clamped01)
+            }
+        }
+    }
+}
+
+private extension Double {
+    var clamped01: Double { Swift.min(1, Swift.max(0, self)) }
     var percentText: String { "\(Int((clamped01 * 100).rounded()))%" }
 }
 
 #Preview("Onboarding — idle") {
     OnboardingView(model: OnboardingModel(handle: "davidfincher"), onSubmit: { _, _ in })
-        .frame(width: 720, height: 560)
-        .miseTheme(.noir)
+        .frame(width: 820, height: 680)
+        .miseTheme(.repertory)
 }
 
 #Preview("Onboarding — syncing") {
     OnboardingView(
         model: OnboardingModel(
             handle: "davidfincher",
-            status: .syncing(progress: 0.42, message: "Loading diary…")
+            status: .syncing(progress: 0.42, message: "Reading the diary…")
         ),
         onSubmit: { _, _ in }
     )
-    .frame(width: 720, height: 560)
-    .miseTheme(.criterion)
-}
-
-#Preview("Onboarding — failed") {
-    OnboardingView(
-        model: OnboardingModel(
-            handle: "davidfincher",
-            status: .failed("We couldn't find that handle. Check the spelling and try again.")
-        ),
-        onSubmit: { _, _ in }
-    )
-    .frame(width: 720, height: 560)
-    .miseTheme(.technicolor)
+    .frame(width: 820, height: 680)
+    .miseTheme(.repertory)
 }

@@ -44,6 +44,8 @@ public struct MiseTheme: Sendable, Equatable {
     public let theme: Theme
 
     public init(_ theme: Theme) {
+        // Ensure the bundled Repertory typefaces are registered before use.
+        _ = MiseFontRegistry.registerOnce
         self.theme = theme
     }
 
@@ -60,12 +62,22 @@ public struct MiseTheme: Sendable, Equatable {
 
     // MARK: Typography
 
-    /// The resolved, size-scaled font for a semantic role, honoring the theme's
-    /// `FontFamily`. The `.mono` role is always monospaced regardless of family.
+    /// The resolved, size-scaled font for a semantic role, using the bundled
+    /// Repertory faces: Fraunces for display, Newsreader for prose, and Courier
+    /// Prime (the screenwriter's font) for labels and data. Falls back to the
+    /// system face automatically if a bundled font fails to load.
     public func font(_ role: FontRole) -> Font {
         let size = MiseTheme.scaledFontSize(role: role, sizeScale: theme.typography.sizeScale)
-        let design = MiseTheme.fontDesign(for: theme.typography.family, role: role)
-        return Font.system(size: size, weight: role.weight, design: design)
+        switch role {
+        case .largeTitle, .title:
+            return Font.custom(MiseFontRegistry.displayFamily, size: size)
+        case .headline:
+            return Font.custom(MiseFontRegistry.bodyFamily, size: size).weight(.medium)
+        case .body:
+            return Font.custom(MiseFontRegistry.bodyFamily, size: size)
+        case .caption, .mono:
+            return Font.custom(MiseFontRegistry.dataFamily, size: size)
+        }
     }
 
     /// Pure: the point size for a role at a given size scale, clamped to a sane
