@@ -60,27 +60,72 @@ public struct MiseTheme: Sendable, Equatable {
     public var posterBorder: Color { theme.palette.posterBorder.swiftUIColor }
     public var posterShadow: Color { theme.palette.posterShadow.swiftUIColor }
 
+    // MARK: Semantic tokens (translucent, premium chrome)
+
+    /// Whether the active palette reads as dark (drives ink color for the
+    /// opacity-based token system below).
+    public var isDark: Bool { MiseTheme.luminance(theme.palette.background) < 0.5 }
+
+    /// The base "ink" the opacity tokens are built from: white on dark, near-black on light.
+    private var ink: Color { isDark ? .white : .black }
+
+    /// Text at three levels of emphasis (opacity-based, like the reference).
+    public var textPrimary: Color { ink.opacity(0.93) }
+    public var textSecondary: Color { ink.opacity(0.58) }
+    public var textTertiary: Color { ink.opacity(0.38) }
+
+    /// Elevated translucent surface fill for cards/panels over the vibrancy.
+    public var cardFill: Color { ink.opacity(isDark ? 0.06 : 0.05) }
+    /// A slightly stronger fill for nested/hovered surfaces.
+    public var cardFillStrong: Color { ink.opacity(isDark ? 0.10 : 0.08) }
+    /// Hairline stroke for separating translucent surfaces.
+    public var hairline: Color { ink.opacity(isDark ? 0.10 : 0.10) }
+    /// Recessed wells (inputs, tracks).
+    public var recess: Color { ink.opacity(isDark ? 0.14 : 0.06) }
+
+    /// Subtle fill shown on hover.
+    public var hoverFill: Color { ink.opacity(0.06) }
+    /// The selected-row pill fill (bright, like the reference's white pill).
+    public var selectionFill: Color { isDark ? Color.white.opacity(0.95) : Color.black.opacity(0.90) }
+    /// Text/icon color on top of `selectionFill`.
+    public var onSelection: Color { isDark ? Color.black.opacity(0.9) : Color.white.opacity(0.95) }
+
+    /// Soft elevation shadow for cards (color, radius, y-offset).
+    public var shadowColor: Color { Color.black.opacity(isDark ? 0.45 : 0.14) }
+    public var shadowRadius: CGFloat { 24 }
+    public var shadowY: CGFloat { 14 }
+
+    /// Standard interaction motion: a gentle spring for selection/appearance.
+    public var motion: Animation { .spring(response: 0.32, dampingFraction: 0.82) }
+    /// Fast ease for hover fills.
+    public var hoverMotion: Animation { .easeOut(duration: 0.14) }
+
+    /// Pure: relative luminance (0...1) of an RGBAColor, for dark/light detection.
+    public static func luminance(_ c: RGBAColor) -> Double {
+        0.2126 * c.red + 0.7152 * c.green + 0.0722 * c.blue
+    }
+
     // MARK: Typography
 
-    /// The resolved, size-scaled font for a semantic role, using the bundled
-    /// faces: Bricolage Grotesque for display, Geist for UI/prose, and Geist Mono
-    /// for data. Falls back to the system face automatically if a bundled font
-    /// fails to load.
+    /// The resolved, size-scaled font for a semantic role. Uses SF Pro (the
+    /// system face) with deliberate weights and optical sizing — the premium
+    /// feel comes from the hierarchy, spacing, and opacity system, not a novelty
+    /// typeface (per the macOS HIG / Linear-Arc-Raycast register).
     public func font(_ role: FontRole) -> Font {
         let size = MiseTheme.scaledFontSize(role: role, sizeScale: theme.typography.sizeScale)
         switch role {
         case .largeTitle:
-            return Font.custom(MiseFontRegistry.displayFamily, size: size).weight(.bold)
+            return .system(size: size, weight: .bold, design: .default)
         case .title:
-            return Font.custom(MiseFontRegistry.displayFamily, size: size).weight(.semibold)
+            return .system(size: size, weight: .semibold, design: .default)
         case .headline:
-            return Font.custom(MiseFontRegistry.bodyFamily, size: size).weight(.semibold)
+            return .system(size: size, weight: .semibold, design: .default)
         case .body:
-            return Font.custom(MiseFontRegistry.bodyFamily, size: size)
+            return .system(size: size, weight: .regular, design: .default)
         case .caption:
-            return Font.custom(MiseFontRegistry.bodyFamily, size: size).weight(.medium)
+            return .system(size: size, weight: .medium, design: .default)
         case .mono:
-            return Font.custom(MiseFontRegistry.dataFamily, size: size)
+            return .system(size: size, weight: .regular, design: .monospaced)
         }
     }
 

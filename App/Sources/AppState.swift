@@ -12,7 +12,7 @@ import ThemeStudioFeature
 @Observable
 final class AppState {
     let library: LibraryController
-    let themeModel = ThemeStudioModel(theme: .marquee)
+    let themeModel = ThemeStudioModel(theme: .studio)
     var section: Section? = .dashboard
 
     enum Section: String, CaseIterable, Identifiable, Hashable {

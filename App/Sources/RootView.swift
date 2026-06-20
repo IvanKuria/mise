@@ -17,6 +17,7 @@ struct RootView: View {
             }
         }
         .miseTheme(app.themeModel.theme)
+        .miseWindowChrome()
     }
 
     private func startLoad(handle: String, tmdbKey: String?) {

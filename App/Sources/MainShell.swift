@@ -16,16 +16,50 @@ struct MainShell: View {
     var body: some View {
         @Bindable var app = app
         NavigationSplitView {
-            List(AppState.Section.allCases, selection: $app.section) { section in
-                Label(section.rawValue, systemImage: section.symbol)
-                    .tag(section)
-            }
-            .navigationTitle("Mise")
-            .navigationSplitViewColumnWidth(min: 200, ideal: 220)
+            sidebar
+                .navigationSplitViewColumnWidth(min: 220, ideal: 240)
+                .toolbar(removing: .sidebarToggle)
         } detail: {
             detail(for: app.section ?? .dashboard)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.clear)
         }
+    }
+
+    @ViewBuilder
+    private var sidebar: some View {
+        @Bindable var app = app
+        let theme = MiseTheme(app.themeModel.theme)
+        ScrollView {
+            VStack(alignment: .leading, spacing: theme.spacing(0.5)) {
+                Text("MISE")
+                    .font(theme.font(.caption))
+                    .tracking(2.5)
+                    .foregroundStyle(theme.textTertiary)
+                    .padding(.horizontal, theme.spacing(1.5))
+                    .padding(.top, theme.spacing(1))
+                    .padding(.bottom, theme.spacing(1.5))
+
+                ForEach(AppState.Section.allCases) { section in
+                    let selected = (app.section ?? .dashboard) == section
+                    MiseRow(isSelected: selected) {
+                        HStack(spacing: theme.spacing(1.25)) {
+                            Image(systemName: section.symbol)
+                                .font(.system(size: 14, weight: .medium))
+                                .frame(width: 18)
+                                .foregroundStyle(selected ? theme.onSelection : theme.textSecondary)
+                            Text(section.rawValue)
+                                .font(theme.font(.body).weight(selected ? .semibold : .regular))
+                                .foregroundStyle(selected ? theme.onSelection : theme.textPrimary)
+                        }
+                    }
+                    .onTapGesture { app.section = section }
+                }
+            }
+            .padding(theme.spacing(1))
+        }
+        .scrollContentBackground(.hidden)
+        .background(.clear)
     }
 
     @ViewBuilder

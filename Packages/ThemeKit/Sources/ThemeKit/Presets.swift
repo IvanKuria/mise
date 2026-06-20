@@ -133,6 +133,27 @@ extension Theme {
         widgetSkin: .poster
     )
 
+    /// Neutral, translucent premium chrome — the default. Reads as a soft dark
+    /// vibrancy that picks up the desktop behind it; posters carry the color.
+    public static let studio = Theme(
+        id: "builtin.studio",
+        name: "Studio",
+        palette: Palette(
+            background: color("#1B1C1E"),
+            surface: color("#26272B"),
+            primaryText: color("#FFFFFF"),
+            secondaryText: color("#9C9CA2"),
+            accent: color("#E0A75A"),
+            secondaryAccent: color("#C5705A"),
+            posterBorder: color("#FFFFFF1F"),
+            posterShadow: color("#00000080")
+        ),
+        typography: Typography(family: .system, sizeScale: 1.0),
+        layoutDensity: .standard,
+        posterWallStyle: .grid,
+        widgetSkin: .poster
+    )
+
     /// All built-in presets, in display order.
-    public static let allBuiltIn: [Theme] = [marquee, repertory, noir, technicolor, criterion, terminal]
+    public static let allBuiltIn: [Theme] = [studio, marquee, repertory, noir, technicolor, criterion, terminal]
 }
