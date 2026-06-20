@@ -63,19 +63,23 @@ public struct MiseTheme: Sendable, Equatable {
     // MARK: Typography
 
     /// The resolved, size-scaled font for a semantic role, using the bundled
-    /// Repertory faces: Fraunces for display, Newsreader for prose, and Courier
-    /// Prime (the screenwriter's font) for labels and data. Falls back to the
-    /// system face automatically if a bundled font fails to load.
+    /// faces: Bricolage Grotesque for display, Geist for UI/prose, and Geist Mono
+    /// for data. Falls back to the system face automatically if a bundled font
+    /// fails to load.
     public func font(_ role: FontRole) -> Font {
         let size = MiseTheme.scaledFontSize(role: role, sizeScale: theme.typography.sizeScale)
         switch role {
-        case .largeTitle, .title:
-            return Font.custom(MiseFontRegistry.displayFamily, size: size)
+        case .largeTitle:
+            return Font.custom(MiseFontRegistry.displayFamily, size: size).weight(.bold)
+        case .title:
+            return Font.custom(MiseFontRegistry.displayFamily, size: size).weight(.semibold)
         case .headline:
-            return Font.custom(MiseFontRegistry.bodyFamily, size: size).weight(.medium)
+            return Font.custom(MiseFontRegistry.bodyFamily, size: size).weight(.semibold)
         case .body:
             return Font.custom(MiseFontRegistry.bodyFamily, size: size)
-        case .caption, .mono:
+        case .caption:
+            return Font.custom(MiseFontRegistry.bodyFamily, size: size).weight(.medium)
+        case .mono:
             return Font.custom(MiseFontRegistry.dataFamily, size: size)
         }
     }
@@ -112,8 +116,8 @@ public struct MiseTheme: Sendable, Equatable {
 
     /// Base spacing unit (pre-density). The product's rhythm is built on this.
     public static let baseSpacingUnit: CGFloat = 8
-    /// Base corner radius (pre-density).
-    public static let baseCornerRadius: CGFloat = 10
+    /// Base corner radius (pre-density). Generous, for soft rounded cards.
+    public static let baseCornerRadius: CGFloat = 16
 
     /// Pure: a density-scaled spacing value for a step count (1 == base unit).
     public static func spacing(steps: CGFloat, density: LayoutDensity) -> CGFloat {

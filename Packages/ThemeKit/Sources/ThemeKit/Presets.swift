@@ -112,6 +112,27 @@ extension Theme {
         widgetSkin: .minimal
     )
 
+    /// Cinematic dark chrome with warm marquee gold — quiet UI so posters carry
+    /// the color. The default identity.
+    public static let marquee = Theme(
+        id: "builtin.marquee",
+        name: "Marquee",
+        palette: Palette(
+            background: color("#20271A"),
+            surface: color("#2C3524"),
+            primaryText: color("#F2F1E6"),
+            secondaryText: color("#A6AD94"),
+            accent: color("#E8B45C"),
+            secondaryAccent: color("#C5705A"),
+            posterBorder: color("#3C4630"),
+            posterShadow: color("#0B0F08AA")
+        ),
+        typography: Typography(family: .system, sizeScale: 1.0),
+        layoutDensity: .comfortable,
+        posterWallStyle: .grid,
+        widgetSkin: .poster
+    )
+
     /// All built-in presets, in display order.
-    public static let allBuiltIn: [Theme] = [repertory, noir, technicolor, criterion, terminal]
+    public static let allBuiltIn: [Theme] = [marquee, repertory, noir, technicolor, criterion, terminal]
 }

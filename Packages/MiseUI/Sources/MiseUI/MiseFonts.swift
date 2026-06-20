@@ -1,24 +1,20 @@
 import Foundation
 import CoreText
 
-/// Registers the bundled Repertory typefaces (Fraunces, Newsreader, Courier
-/// Prime) with Core Text exactly once, so `Font.custom(...)` can resolve them.
-/// `MiseTheme.init` touches `registerOnce` to guarantee registration before any
-/// font is requested.
+/// Registers the bundled typefaces (Bricolage Grotesque, Geist, Geist Mono) with
+/// Core Text exactly once, so `Font.custom(...)` can resolve them. `MiseTheme.init`
+/// touches `registerOnce` to guarantee registration before any font is requested.
 enum MiseFontRegistry {
     /// Family names used by `MiseTheme.font(_:)`.
-    static let displayFamily = "Fraunces"
-    static let bodyFamily = "Newsreader"
-    static let dataFamily = "Courier Prime"
+    static let displayFamily = "Bricolage Grotesque"
+    static let bodyFamily = "Geist"
+    static let dataFamily = "Geist Mono"
 
     static let registerOnce: Void = {
         let files = [
-            ("Fraunces", "ttf"),
-            ("Fraunces-Italic", "ttf"),
-            ("Newsreader", "ttf"),
-            ("CourierPrime-Regular", "ttf"),
-            ("CourierPrime-Bold", "ttf"),
-            ("CourierPrime-Italic", "ttf"),
+            ("BricolageGrotesque", "ttf"),
+            ("Geist", "ttf"),
+            ("GeistMono", "ttf"),
         ]
         for (name, ext) in files {
             guard let url = Bundle.module.url(
