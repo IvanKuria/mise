@@ -30,18 +30,15 @@ public struct ThemeStudioView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: mise.spacing(3)) {
                 hero
-                HStack(alignment: .top, spacing: mise.spacing(3)) {
-                    controlsCard
-                        .frame(width: 360)
-                    previewCard
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                controlsCard
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                previewCard
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(mise.spacing(4))
-            .frame(maxWidth: 1100, alignment: .leading)
+            .frame(maxWidth: 820, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(minWidth: 820, minHeight: 560)
         .background(.clear)
         .miseTheme(model.theme)
         .fileExporter(
