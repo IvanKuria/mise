@@ -85,6 +85,66 @@ struct TMDBClientTests {
         #expect(request.url?.absoluteString == "https://api.themoviedb.org/3/movie/496243/watch/providers")
     }
 
+    // MARK: - search
+
+    @Test("decodes a /search/movie response into TMDBSearchResults")
+    func decodesSearch() async throws {
+        let client = TMDBClient(apiKey: "k", transport: MockTransport(.success(Fixtures.searchMovie)))
+
+        let results = try await client.search(title: "Parasite", year: nil)
+
+        #expect(results.count == 3)
+        #expect(results[0] == TMDBSearchResult(
+            id: 496243,
+            title: "Parasite",
+            releaseYear: 2019,
+            posterPath: "/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg"
+        ))
+        #expect(results[1].id == 61225)
+        #expect(results[1].releaseYear == 1982)
+        // Empty release_date parses to nil year; null poster_path stays nil.
+        #expect(results[2].releaseYear == nil)
+        #expect(results[2].posterPath == nil)
+    }
+
+    @Test("returns no results for an empty search response")
+    func searchEmptyReturnsEmpty() async throws {
+        let client = TMDBClient(apiKey: "k", transport: MockTransport(.success(Fixtures.searchEmpty)))
+
+        let results = try await client.search(title: "Nonexistent Film", year: 1999)
+
+        #expect(results.isEmpty)
+    }
+
+    @Test("search with a year includes primary_release_year and encodes the query")
+    func searchRequestWithYear() async throws {
+        let transport = MockTransport(.success(Fixtures.searchMovie))
+        let client = TMDBClient(apiKey: "k", transport: transport)
+
+        _ = try await client.search(title: "The Florida Project", year: 2017)
+
+        let request = try #require(transport.recordedRequests.first)
+        let components = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)
+        let items = try #require(components?.queryItems)
+        #expect(request.url?.path == "/3/search/movie")
+        #expect(items.contains(URLQueryItem(name: "query", value: "The Florida Project")))
+        #expect(items.contains(URLQueryItem(name: "primary_release_year", value: "2017")))
+    }
+
+    @Test("search without a year omits primary_release_year")
+    func searchRequestWithoutYear() async throws {
+        let transport = MockTransport(.success(Fixtures.searchMovie))
+        let client = TMDBClient(apiKey: "k", transport: transport)
+
+        _ = try await client.search(title: "Parasite", year: nil)
+
+        let request = try #require(transport.recordedRequests.first)
+        let components = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)
+        let items = components?.queryItems ?? []
+        #expect(items.contains(URLQueryItem(name: "query", value: "Parasite")))
+        #expect(!items.contains { $0.name == "primary_release_year" })
+    }
+
     // MARK: - posterURL
 
     @Test("builds a poster URL from size and path")

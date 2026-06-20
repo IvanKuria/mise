@@ -41,6 +41,17 @@ public actor TMDBClient {
         return try decode(MovieDTO.self, from: data).toModel()
     }
 
+    /// GET /search/movie?query=<title> (with `primary_release_year` when `year` is set).
+    public func search(title: String, year: Int?) async throws -> [TMDBSearchResult] {
+        var query = [URLQueryItem(name: "query", value: title)]
+        if let year {
+            query.append(URLQueryItem(name: "primary_release_year", value: String(year)))
+        }
+        let request = makeRequest(path: "search/movie", queryItems: query)
+        let data = try await transport.data(for: request)
+        return try decode(SearchResponseDTO.self, from: data).results.map { $0.toModel() }
+    }
+
     /// GET /movie/{id}/watch/providers — providers for `region`, tagged by kind.
     /// Returns an empty array when the region is absent.
     public func watchProviders(tmdbID: Int, region: String) async throws -> [WatchProvider] {
@@ -59,13 +70,15 @@ public actor TMDBClient {
 
     // MARK: - Helpers
 
-    private func makeRequest(path: String) -> URLRequest {
+    private func makeRequest(path: String, queryItems: [URLQueryItem] = []) -> URLRequest {
         var url = URL(string: path, relativeTo: Self.baseURL)!.absoluteURL
+        var items = queryItems
         if !useBearerToken {
-            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
-            var items = components.queryItems ?? []
             items.append(URLQueryItem(name: "api_key", value: apiKey))
-            components.queryItems = items
+        }
+        if !items.isEmpty {
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+            components.queryItems = (components.queryItems ?? []) + items
             url = components.url ?? url
         }
         var request = URLRequest(url: url)

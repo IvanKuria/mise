@@ -26,6 +26,23 @@ public struct TMDBMovie: Sendable, Equatable {
     }
 }
 
+/// A single result from a TMDB movie search.
+public struct TMDBSearchResult: Sendable, Equatable {
+    public let id: Int
+    public let title: String
+    /// The release year parsed from TMDB's `release_date` (e.g. "2019-05-30" -> 2019).
+    /// `nil` when the date is absent or unparseable.
+    public let releaseYear: Int?
+    public let posterPath: String?
+
+    public init(id: Int, title: String, releaseYear: Int?, posterPath: String?) {
+        self.id = id
+        self.title = title
+        self.releaseYear = releaseYear
+        self.posterPath = posterPath
+    }
+}
+
 /// A streaming / watch provider for a film in a given region (JustWatch data via TMDB).
 public struct WatchProvider: Sendable, Equatable {
     /// How the film is available from this provider.

@@ -34,6 +34,38 @@ struct GenreDTO: Decodable {
     let name: String
 }
 
+struct SearchResponseDTO: Decodable {
+    let results: [SearchResultDTO]
+}
+
+struct SearchResultDTO: Decodable {
+    let id: Int
+    let title: String
+    let posterPath: String?
+    let releaseDate: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title
+        case posterPath = "poster_path"
+        case releaseDate = "release_date"
+    }
+
+    func toModel() -> TMDBSearchResult {
+        TMDBSearchResult(
+            id: id,
+            title: title,
+            releaseYear: Self.year(from: releaseDate),
+            posterPath: posterPath
+        )
+    }
+
+    /// Parses a leading 4-digit year from a TMDB "YYYY-MM-DD" date; `nil` if absent.
+    static func year(from date: String?) -> Int? {
+        guard let date, date.count >= 4 else { return nil }
+        return Int(date.prefix(4))
+    }
+}
+
 struct WatchProvidersResponseDTO: Decodable {
     let id: Int
     let results: [String: RegionProvidersDTO]

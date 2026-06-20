@@ -48,6 +48,49 @@ enum Fixtures {
     }
     """.utf8)
 
+    /// Mirrors GET /search/movie?query=Parasite with multiple results,
+    /// trimmed to fields we decode.
+    static let searchMovie = Data("""
+    {
+      "page": 1,
+      "results": [
+        {
+          "id": 496243,
+          "title": "Parasite",
+          "poster_path": "/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
+          "release_date": "2019-05-30",
+          "overview": "All unemployed, Ki-taek's family takes peculiar interest..."
+        },
+        {
+          "id": 61225,
+          "title": "Parasite",
+          "poster_path": "/oldParasite1982.jpg",
+          "release_date": "1982-03-12",
+          "overview": "A doctor has developed a deadly parasite..."
+        },
+        {
+          "id": 12345,
+          "title": "Parasite (no date)",
+          "poster_path": null,
+          "release_date": "",
+          "overview": "No release date here."
+        }
+      ],
+      "total_pages": 1,
+      "total_results": 3
+    }
+    """.utf8)
+
+    /// A /search/movie response with no results.
+    static let searchEmpty = Data("""
+    {
+      "page": 1,
+      "results": [],
+      "total_pages": 1,
+      "total_results": 0
+    }
+    """.utf8)
+
     /// A typical TMDB error body for a non-2xx response.
     static let errorBody = Data("""
     {
