@@ -14,20 +14,17 @@ public struct SectionHeader: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: theme.spacing(0.75)) {
-            HStack(alignment: .firstTextBaseline, spacing: theme.spacing()) {
-                Text(title)
-                    .font(theme.font(.title))
-                    .foregroundStyle(theme.primaryText)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(theme.font(.caption))
-                        .foregroundStyle(theme.secondaryText)
-                }
+        HStack(alignment: .firstTextBaseline, spacing: theme.spacing(1.25)) {
+            Text(title)
+                .font(theme.font(.title))
+                .foregroundStyle(theme.textPrimary)
+            if let subtitle {
+                Text(subtitle)
+                    .font(theme.font(.caption))
+                    .foregroundStyle(theme.textTertiary)
+                    .lineLimit(1)
             }
-            Rectangle()
-                .fill(theme.accent)
-                .frame(width: theme.spacing(4), height: 2)
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

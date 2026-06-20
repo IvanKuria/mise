@@ -20,7 +20,6 @@ final class AppState {
         case browse = "Browse"
         case compare = "Compare"
         case watchlist = "Watchlist"
-        case tasteCard = "Taste DNA"
         case themeStudio = "Theme"
 
         var id: String { rawValue }
@@ -31,7 +30,6 @@ final class AppState {
             case .browse: "square.grid.3x3.fill"
             case .compare: "person.2.fill"
             case .watchlist: "die.face.5.fill"
-            case .tasteCard: "sparkles"
             case .themeStudio: "paintpalette.fill"
             }
         }

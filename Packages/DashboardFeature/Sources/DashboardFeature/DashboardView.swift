@@ -97,8 +97,19 @@ public struct DashboardView: View {
             StatItem(value: DashboardFormat.count(stats.totalLogged), label: "Films logged"),
             StatItem(value: DashboardFormat.runtimeDays(minutes: stats.totalRuntimeMinutes), unit: "days", label: "Runtime"),
             StatItem(value: DashboardFormat.averageStarsLabel(DashboardFormat.averageStars(histogram: stats.ratingsHistogram)), label: "Avg rating"),
-            StatItem(value: DashboardFormat.contrarianLabel(stats.contrarianScore), label: "vs crowd", emphasis: true),
+            contrarianStat,
         ])
+    }
+
+    private var contrarianStat: StatItem {
+        guard let s = stats.contrarianScore, abs(s) >= 0.05 else {
+            return StatItem(value: "—", label: "vs crowd", emphasis: true)
+        }
+        return StatItem(
+            value: String(format: "%+.1f★", s),
+            label: s > 0 ? "kinder than avg" : "harsher than avg",
+            emphasis: true
+        )
     }
 
     private var ratingsSection: some View {

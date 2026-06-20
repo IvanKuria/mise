@@ -48,12 +48,15 @@ public struct StatBand: View {
                 Text(item.value)
                     .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(item.emphasis ? theme.accent : theme.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 if let unit = item.unit {
                     Text(unit)
                         .font(theme.font(.headline))
                         .foregroundStyle(theme.textSecondary)
                 }
             }
+            .lineLimit(1)
             Text(item.label.uppercased())
                 .font(theme.font(.caption))
                 .tracking(1.4)
