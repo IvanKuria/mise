@@ -56,12 +56,21 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR" "$EXPORT_DIR"
 
 echo "==> Archiving ($CONFIGURATION)"
+# Apply the gitignored Secrets.xcconfig (e.g. TMDB_API_KEY) when present so the
+# release embeds the bundled TMDB key. Absent = a no-key build (posters need a
+# user key in Settings).
+XCCONFIG_ARGS=()
+if [[ -f "$APP_DIR/Secrets.xcconfig" ]]; then
+  echo "    (applying Secrets.xcconfig)"
+  XCCONFIG_ARGS=(-xcconfig "$APP_DIR/Secrets.xcconfig")
+fi
 xcodebuild \
   -project "$PROJECT" \
   -scheme "$SCHEME" \
   -configuration "$CONFIGURATION" \
   -destination "generic/platform=macOS" \
   -archivePath "$ARCHIVE_PATH" \
+  "${XCCONFIG_ARGS[@]}" \
   DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
   CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \

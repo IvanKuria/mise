@@ -131,7 +131,7 @@ struct FilmDetailView: View {
                 .lineLimit(4)
                 .fixedSize(horizontal: false, vertical: true)
         } else {
-            Text(app.tmdbKey.isEmpty ? "Add a TMDB key in Settings for synopses." : "No synopsis available.")
+            Text(app.effectiveTMDBKey.isEmpty ? "Add a TMDB key in Settings for synopses." : "No synopsis available.")
                 .font(.system(size: 12))
                 .foregroundStyle(NotchStyle.textTertiary)
         }

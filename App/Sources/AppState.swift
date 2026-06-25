@@ -24,9 +24,21 @@ final class AppState {
     var recentHandles: [String] {
         didSet { defaults.set(recentHandles, forKey: Keys.recentHandles) }
     }
-    /// Optional TMDB API key enabling poster art (persisted).
+    /// Optional TMDB API key enabling poster art (persisted). Overrides the
+    /// bundled default when set.
     var tmdbKey: String {
         didSet { defaults.set(tmdbKey, forKey: Keys.tmdbKey) }
+    }
+
+    /// A TMDB key baked into the build (Info.plist `TMDBAPIKey`, injected from a
+    /// gitignored Secrets.xcconfig). Empty in source builds without that secret.
+    var bundledTMDBKey: String {
+        (Bundle.main.object(forInfoDictionaryKey: "TMDBAPIKey") as? String) ?? ""
+    }
+    /// The key used for requests: the user's own if set, otherwise the bundled
+    /// default — so posters/synopses work out of the box.
+    var effectiveTMDBKey: String {
+        tmdbKey.isEmpty ? bundledTMDBKey : tmdbKey
     }
 
     var history: WatchHistory? { library.history }
@@ -107,7 +119,7 @@ final class AppState {
             return
         }
         remember(currentHandle)
-        await library.load(handle: currentHandle, tmdbKey: tmdbKey.isEmpty ? nil : tmdbKey)
+        await library.load(handle: currentHandle, tmdbKey: effectiveTMDBKey.isEmpty ? nil : effectiveTMDBKey)
         lastSyncDate = Date()
         // Map the controller's failure into a short, user-facing message.
         if case .failed(let msg) = library.phase {
@@ -176,9 +188,9 @@ final class AppState {
     /// Fetches TMDB details (synopsis, runtime, genres) for a film, cached. Needs
     /// a TMDB key; returns nil without one or on failure.
     func filmDetail(tmdbID: Int?) async -> TMDBMovie? {
-        guard let id = tmdbID, !tmdbKey.isEmpty else { return nil }
+        guard let id = tmdbID, !effectiveTMDBKey.isEmpty else { return nil }
         if let cached = detailCache[id] { return cached }
-        let client = TMDBClient(apiKey: tmdbKey)
+        let client = TMDBClient(apiKey: effectiveTMDBKey)
         guard let movie = try? await client.movie(tmdbID: id) else { return nil }
         detailCache[id] = movie
         return movie

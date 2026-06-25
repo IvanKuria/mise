@@ -15,3 +15,4 @@ secrets.json
 
 # Build / distribution output
 App/build/
+App/Mise-Info.plist
