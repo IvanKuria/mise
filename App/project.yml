@@ -49,6 +49,8 @@ targets:
       path: Mise-Info.plist
       properties:
         CFBundleDisplayName: Mise
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.entertainment
         NSHumanReadableCopyright: "Unofficial. Not affiliated with Letterboxd."
