@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var pendingClose = false
+    private var forcedOpen = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -25,7 +26,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSApplication.didChangeScreenParametersNotification, object: nil
         )
 
-        Task { await appState.bootstrap() }
+        Task {
+            await appState.bootstrap()
+            // Debug: pin the notch open for screenshots (no hover/permission needed).
+            if ProcessInfo.processInfo.environment["MISE_FORCE_OPEN"] == "1" {
+                if let name = ProcessInfo.processInfo.environment["MISE_PANEL"],
+                   let panel = NotchViewModel.Panel(rawValue: name) {
+                    vm.panel = panel
+                }
+                forcedOpen = true
+                open()
+            }
+        }
     }
 
     // MARK: Window
@@ -67,6 +79,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func close() {
         guard vm.isOpen else { return }
+        if forcedOpen { return }
         // Don't collapse while the user is editing (window is key).
         if window?.isKeyWindow == true { return }
         vm.status = .closed

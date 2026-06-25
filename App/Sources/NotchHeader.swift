@@ -2,7 +2,7 @@ import SwiftUI
 import MiseCore
 
 /// The slim header of the expanded notch: avatar + username switcher (click to
-/// change/add a profile), a panel switcher, and a sync button.
+/// change/add a profile), the active-panel switcher, and a sync button.
 struct NotchHeader: View {
     @Environment(AppState.self) private var app
     @Environment(NotchViewModel.self) private var vm
@@ -14,7 +14,7 @@ struct NotchHeader: View {
         HStack(spacing: 10) {
             avatar
             handle
-            Spacer(minLength: 8)
+            Spacer(minLength: 12)
             panelSwitcher
             syncButton
         }
@@ -33,7 +33,7 @@ struct NotchHeader: View {
                 avatarFallback
             }
         }
-        .frame(width: 22, height: 22)
+        .frame(width: 24, height: 24)
         .clipShape(Circle())
         .overlay(Circle().strokeBorder(NotchStyle.hairline, lineWidth: 1))
     }
@@ -41,7 +41,9 @@ struct NotchHeader: View {
     private var avatarFallback: some View {
         ZStack {
             NotchStyle.surfaceElevated
-            Image(systemName: "person.fill").font(.system(size: 11)).foregroundStyle(NotchStyle.textTertiary)
+            Image(systemName: "person.fill")
+                .font(.system(size: 11))
+                .foregroundStyle(NotchStyle.textTertiary)
         }
     }
 
@@ -54,24 +56,25 @@ struct NotchHeader: View {
                 .textFieldStyle(.plain)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(NotchStyle.textPrimary)
-                .frame(width: 130)
+                .frame(width: 140)
                 .onSubmit { commit() }
                 .onExitCommand { editing = false }
         } else {
             Menu {
                 if !app.recentHandles.isEmpty {
                     ForEach(app.recentHandles, id: \.self) { h in
-                        Button(h) { Task { await app.switchTo(handle: h) } }
+                        Button("@\(h)") { Task { await app.switchTo(handle: h) } }
                     }
                     Divider()
                 }
                 Button("Change username…") { draft = app.currentHandle; editing = true }
             } label: {
                 HStack(spacing: 4) {
-                    Text(app.currentHandle.isEmpty ? "Set username" : app.currentHandle)
+                    Text(app.currentHandle.isEmpty ? "Set username" : "@\(app.currentHandle)")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(app.currentHandle.isEmpty ? NotchStyle.textTertiary : NotchStyle.textPrimary)
-                    Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 7, weight: .bold))
                         .foregroundStyle(NotchStyle.textTertiary)
                 }
             }
@@ -88,19 +91,20 @@ struct NotchHeader: View {
         Task { await app.switchTo(handle: value) }
     }
 
-    // MARK: Panel switcher
+    // MARK: Panel switcher (segmented)
 
     private var panelSwitcher: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 0) {
             ForEach(NotchViewModel.Panel.allCases) { panel in
+                let selected = vm.panel == panel
                 Button { vm.panel = panel } label: {
                     Image(systemName: panel.symbol)
-                        .font(.system(size: 11, weight: .medium))
-                        .frame(width: 26, height: 22)
-                        .foregroundStyle(vm.panel == panel ? Color.black : NotchStyle.textSecondary)
+                        .font(.system(size: 11, weight: .semibold))
+                        .frame(width: 30, height: 24)
+                        .foregroundStyle(selected ? NotchStyle.textPrimary : NotchStyle.textSecondary)
                         .background(
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .fill(vm.panel == panel ? NotchStyle.accent : Color.clear)
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .fill(selected ? NotchStyle.surfaceElevated : Color.clear)
                         )
                         .contentShape(Rectangle())
                 }
@@ -109,7 +113,7 @@ struct NotchHeader: View {
             }
         }
         .padding(2)
-        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(NotchStyle.surface))
+        .background(Capsule(style: .continuous).fill(NotchStyle.surface))
     }
 
     // MARK: Sync
@@ -120,12 +124,14 @@ struct NotchHeader: View {
                 if app.isSyncing {
                     ProgressView().controlSize(.small).tint(NotchStyle.textSecondary)
                 } else {
-                    Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .semibold))
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(NotchStyle.textSecondary)
                 }
             }
-            .frame(width: 24, height: 22)
-            .contentShape(Rectangle())
+            .frame(width: 26, height: 26)
+            .background(Circle().fill(NotchStyle.surface))
+            .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .disabled(app.isSyncing || app.currentHandle.isEmpty)

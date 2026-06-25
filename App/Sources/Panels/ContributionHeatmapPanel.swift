@@ -13,8 +13,8 @@ struct ContributionHeatmapPanel: View {
 
     // MARK: - Layout constants
 
-    private let weeks = 44
-    private let cell: CGFloat = 9
+    private let weeks = 48
+    private let cell: CGFloat = 10
     private let gap: CGFloat = 3
     private let rows = 7  // Sun…Sat
 
@@ -66,11 +66,12 @@ struct ContributionHeatmapPanel: View {
     var body: some View {
         let counts = countsByDay
         let today = Calendar.current.startOfDay(for: Date())
+        let total = counts.values.reduce(0, +)
 
-        VStack(alignment: .leading, spacing: 6) {
-            header
+        VStack(alignment: .leading, spacing: 8) {
+            header(total: total)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 monthLabels(today: today)
 
                 HStack(alignment: .top, spacing: gap) {
@@ -89,10 +90,13 @@ struct ContributionHeatmapPanel: View {
 
     // MARK: - Header + legend
 
-    private var header: some View {
-        HStack {
-            Text("Films watched")
-                .font(.system(size: 11, weight: .medium))
+    private func header(total: Int) -> some View {
+        HStack(spacing: 6) {
+            Text("\(total)")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(NotchStyle.textPrimary)
+            Text("films in the last year")
+                .font(.system(size: 11))
                 .foregroundColor(NotchStyle.textSecondary)
 
             Spacer()
@@ -102,7 +106,7 @@ struct ContributionHeatmapPanel: View {
                     .font(.system(size: 8))
                     .foregroundColor(NotchStyle.textTertiary)
                 ForEach(0..<5, id: \.self) { lvl in
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: 2.5)
                         .fill(NotchStyle.heatColor(level: lvl))
                         .frame(width: cell, height: cell)
                 }
@@ -157,7 +161,7 @@ struct ContributionHeatmapPanel: View {
                 .frame(width: cell, height: cell)
         } else {
             let count = counts[day] ?? 0
-            RoundedRectangle(cornerRadius: 2)
+            RoundedRectangle(cornerRadius: 2.5)
                 .fill(NotchStyle.heatColor(level: level(for: count)))
                 .frame(width: cell, height: cell)
                 .help(tooltip(for: day, count: count))

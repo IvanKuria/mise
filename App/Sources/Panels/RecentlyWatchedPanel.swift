@@ -1,90 +1,98 @@
 import SwiftUI
 import MiseCore
 
-/// A compact filmstrip of the most recent diary entries, rendered inside the
-/// expanded black notch panel. No opaque background of its own — it sits on the
-/// notch's black surface and leans on `NotchStyle` tokens for color.
+/// A horizontal strip of the most recently logged films — poster, title, rating,
+/// and a like heart. Renders on the black notch panel (clear background).
 struct RecentlyWatchedPanel: View {
     let history: WatchHistory
 
-    init(history: WatchHistory) {
-        self.history = history
-    }
+    init(history: WatchHistory) { self.history = history }
 
-    /// Last ~6 entries, newest first, one per film.
     private var entries: [DiaryEntry] {
         var seen = Set<String>()
-        return history.diary
-            .sorted { lhs, rhs in
-                let l = lhs.watchedDate ?? lhs.loggedDate ?? .distantPast
-                let r = rhs.watchedDate ?? rhs.loggedDate ?? .distantPast
-                return l > r
-            }
-            .filter { seen.insert($0.film.id).inserted }
-            .prefix(6)
-            .map { $0 }
+        let sorted = history.diary.sorted {
+            ($0.watchedDate ?? $0.loggedDate ?? .distantPast) > ($1.watchedDate ?? $1.loggedDate ?? .distantPast)
+        }
+        var result: [DiaryEntry] = []
+        for entry in sorted where seen.insert(entry.film.id).inserted {
+            result.append(entry)
+            if result.count == 7 { break }
+        }
+        return result
     }
 
     var body: some View {
-        Group {
-            if entries.isEmpty {
-                emptyState
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: 14) {
-                        ForEach(entries) { entry in
-                            FilmCell(entry: entry)
-                        }
-                    }
-                    .padding(.horizontal, 2)
+        if entries.isEmpty {
+            EmptyHint(symbol: "popcorn", text: "No films logged yet")
+        } else {
+            HStack(alignment: .top, spacing: 16) {
+                ForEach(entries) { entry in
+                    FilmCell(entry: entry)
                 }
+                Spacer(minLength: 0)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-    }
-
-    private var emptyState: some View {
-        Text("No films logged yet")
-            .font(.system(size: 12))
-            .foregroundStyle(NotchStyle.textTertiary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-private struct FilmCell: View {
+/// A poster with its title and rating beneath — shared cell for the film strips.
+struct FilmCell: View {
     let entry: DiaryEntry
+    var showYear: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            FilmPoster(film: entry.film, width: 54)
-
-            Text(entry.film.name)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(NotchStyle.textPrimary)
-                .lineLimit(1)
-                .frame(width: 54, alignment: .leading)
-
-            HStack(spacing: 3) {
-                if let stars = entry.rating?.starString {
-                    Text(stars)
-                        .font(.system(size: 9))
-                        .foregroundStyle(NotchStyle.green)
-                        .lineLimit(1)
-                }
-                if entry.isLiked {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 8))
-                        .foregroundStyle(NotchStyle.heartRed)
+        VStack(alignment: .leading, spacing: 6) {
+            FilmPoster(film: entry.film, width: NotchStyle.posterWidth)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(entry.film.name)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(NotchStyle.textPrimary)
+                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    if showYear, let year = entry.film.releaseYear {
+                        Text(String(year))
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(NotchStyle.textSecondary)
+                    }
+                    if let rating = entry.rating {
+                        Text(rating.starString)
+                            .font(.system(size: 10))
+                            .foregroundStyle(NotchStyle.star)
+                            .lineLimit(1)
+                    }
+                    if entry.isLiked {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 8))
+                            .foregroundStyle(NotchStyle.heart)
+                    }
                 }
             }
-            .frame(width: 54, alignment: .leading)
+            .frame(width: NotchStyle.posterWidth, alignment: .leading)
         }
+    }
+}
+
+/// A centered empty-state hint used by the panels.
+struct EmptyHint: View {
+    let symbol: String
+    let text: String
+
+    var body: some View {
+        VStack(spacing: 7) {
+            Image(systemName: symbol)
+                .font(.system(size: 20, weight: .light))
+                .foregroundStyle(NotchStyle.textTertiary)
+            Text(text)
+                .font(.system(size: 12))
+                .foregroundStyle(NotchStyle.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
 #Preview {
     RecentlyWatchedPanel(history: SampleData.history())
-        .padding(NotchStyle.spacing)
-        .frame(width: 660, height: 150)
-        .background(NotchStyle.panel)
+        .padding(20)
+        .frame(width: 720, height: 200)
+        .background(Color.black)
 }

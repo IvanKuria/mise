@@ -1,39 +1,85 @@
 import SwiftUI
 
-/// The notch's tiny dark design system. The notch is physically black, so the
-/// whole surface is dark; color is held back to posters, the Letterboxd-green
-/// contribution scale, and one warm accent.
+/// The notch's design tokens. The notch is physically black, so the surface is
+/// pure black with near-monochrome content — color is held back to poster art,
+/// a soft gold for stars, and a muted green for the activity grid. Tuned to read
+/// as a first-party Apple surface (Dynamic Island register).
 enum NotchStyle {
-    // Surfaces (on black)
+    // Surface
     static let panel = Color.black
-    static let surface = Color.white.opacity(0.06)
-    static let surfaceElevated = Color.white.opacity(0.10)
-    static let hairline = Color.white.opacity(0.10)
+    static let surface = Color.white.opacity(0.07)
+    static let surfaceElevated = Color.white.opacity(0.12)
+    static let hairline = Color.white.opacity(0.08)
 
     // Text
-    static let textPrimary = Color.white.opacity(0.95)
-    static let textSecondary = Color.white.opacity(0.60)
-    static let textTertiary = Color.white.opacity(0.38)
+    static let textPrimary = Color.white
+    static let textSecondary = Color.white.opacity(0.55)
+    static let textTertiary = Color.white.opacity(0.32)
 
-    // Accents (Letterboxd palette)
-    static let accent = Color(red: 1.0, green: 0.50, blue: 0.0)      // Letterboxd orange #FF8000
-    static let green = Color(red: 0.0, green: 0.878, blue: 0.330)    // #00E054
-    static let blue = Color(red: 0.251, green: 0.737, blue: 0.957)   // #40BCF4
-    static let heartRed = Color(red: 0.93, green: 0.27, blue: 0.32)
+    // Restrained color
+    static let star = Color(red: 0.98, green: 0.78, blue: 0.38)
+    static let heart = Color(red: 0.96, green: 0.42, blue: 0.47)
+    static let green = Color(red: 0.20, green: 0.80, blue: 0.45)
 
     // Metrics
-    static let panelCornerRadius: CGFloat = 22
-    static let cardCornerRadius: CGFloat = 10
-    static let spacing: CGFloat = 10
+    static let panelPaddingH: CGFloat = 20
+    static let panelPaddingBottom: CGFloat = 18
+    static let posterWidth: CGFloat = 72
+    static let posterRadius: CGFloat = 7
+    static let bottomCorner: CGFloat = 28
+    static let topCorner: CGFloat = 10
 
-    /// GitHub-style contribution intensity (0 = empty … 4 = busiest), Letterboxd green.
+    /// GitHub-style contribution intensity (0 empty … 4 busiest), muted green.
     static func heatColor(level: Int) -> Color {
         switch max(0, min(4, level)) {
-        case 0: return Color.white.opacity(0.07)
-        case 1: return green.opacity(0.30)
+        case 0: return Color.white.opacity(0.06)
+        case 1: return green.opacity(0.32)
         case 2: return green.opacity(0.55)
         case 3: return green.opacity(0.78)
         default: return green
         }
+    }
+}
+
+/// The expanded-notch silhouette: small concave "ears" at the top (so the panel
+/// reads as flaring out from the menu bar) and large rounded bottom corners —
+/// the Dynamic Island / boring.notch shape.
+struct NotchShape: Shape {
+    var topRadius: CGFloat = NotchStyle.topCorner
+    var bottomRadius: CGFloat = NotchStyle.bottomCorner
+
+    func path(in rect: CGRect) -> Path {
+        let tr = min(topRadius, rect.height / 2)
+        let br = min(bottomRadius, rect.height / 2)
+        var path = Path()
+        // Top-left concave ear
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.minX + tr, y: rect.minY + tr),
+            control: CGPoint(x: rect.minX + tr, y: rect.minY)
+        )
+        // Down the left edge
+        path.addLine(to: CGPoint(x: rect.minX + tr, y: rect.maxY - br))
+        // Bottom-left convex corner
+        path.addQuadCurve(
+            to: CGPoint(x: rect.minX + tr + br, y: rect.maxY),
+            control: CGPoint(x: rect.minX + tr, y: rect.maxY)
+        )
+        // Bottom edge
+        path.addLine(to: CGPoint(x: rect.maxX - tr - br, y: rect.maxY))
+        // Bottom-right convex corner
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX - tr, y: rect.maxY - br),
+            control: CGPoint(x: rect.maxX - tr, y: rect.maxY)
+        )
+        // Up the right edge
+        path.addLine(to: CGPoint(x: rect.maxX - tr, y: rect.minY + tr))
+        // Top-right concave ear
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX, y: rect.minY),
+            control: CGPoint(x: rect.maxX - tr, y: rect.minY)
+        )
+        path.closeSubpath()
+        return path
     }
 }

@@ -3,7 +3,7 @@ import MiseCore
 
 /// The notch surface. Collapsed = a bare black notch; on hover the window grows
 /// and this renders the expanded black panel (header + active panel) hanging
-/// below the notch.
+/// below the notch, in the Dynamic Island silhouette.
 struct NotchRootView: View {
     @Environment(AppState.self) private var app
     @Environment(NotchViewModel.self) private var vm
@@ -12,13 +12,17 @@ struct NotchRootView: View {
         ZStack(alignment: .top) {
             if vm.isOpen {
                 expanded
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.92, anchor: .top).combined(with: .opacity),
+                        removal: .opacity
+                    ))
             } else {
                 collapsed
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(.spring(response: 0.34, dampingFraction: 0.82), value: vm.isOpen)
+        .animation(.spring(response: 0.36, dampingFraction: 0.84), value: vm.isOpen)
+        .animation(.easeInOut(duration: 0.2), value: vm.panel)
     }
 
     // Collapsed: a black blob matching the notch (invisible over a real notch,
@@ -27,30 +31,26 @@ struct NotchRootView: View {
         Rectangle()
             .fill(Color.black)
             .frame(width: vm.notchSize.width, height: vm.notchSize.height)
-            .clipShape(.rect(bottomLeadingRadius: 10, bottomTrailingRadius: 10))
+            .clipShape(.rect(bottomLeadingRadius: 8, bottomTrailingRadius: 8))
     }
 
     private var expanded: some View {
         VStack(spacing: 0) {
-            // Top strip level with the physical notch (kept black so it merges).
-            Color.clear.frame(height: max(0, vm.notchSize.height - 4))
-            VStack(spacing: 10) {
+            // Strip level with the physical notch, kept black so the panel reads
+            // as growing out of the notch.
+            Color.clear.frame(height: max(0, vm.notchSize.height - 6))
+
+            VStack(alignment: .leading, spacing: 14) {
                 NotchHeader()
-                Rectangle().fill(NotchStyle.hairline).frame(height: 1)
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 14)
+            .padding(.horizontal, NotchStyle.panelPaddingH)
+            .padding(.top, 10)
+            .padding(.bottom, NotchStyle.panelPaddingBottom)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(
-            Color.black.clipShape(
-                .rect(bottomLeadingRadius: NotchStyle.panelCornerRadius,
-                      bottomTrailingRadius: NotchStyle.panelCornerRadius)
-            )
-        )
+        .background(NotchShape().fill(Color.black))
     }
 
     @ViewBuilder
@@ -67,13 +67,17 @@ struct NotchRootView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 6) {
-            Image(systemName: "film.stack").font(.system(size: 22)).foregroundStyle(NotchStyle.textTertiary)
-            Text(app.currentHandle.isEmpty ? "Set your Letterboxd username" : "Syncing \(app.currentHandle)…")
-                .font(.system(size: 12)).foregroundStyle(NotchStyle.textSecondary)
+        VStack(spacing: 7) {
+            Image(systemName: "film.stack")
+                .font(.system(size: 24, weight: .light))
+                .foregroundStyle(NotchStyle.textTertiary)
+            Text(app.currentHandle.isEmpty ? "Add your Letterboxd username" : "Syncing @\(app.currentHandle)…")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(NotchStyle.textSecondary)
             if app.currentHandle.isEmpty {
-                Text("Click the name above to add one.")
-                    .font(.system(size: 10)).foregroundStyle(NotchStyle.textTertiary)
+                Text("Click the name above to get started.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(NotchStyle.textTertiary)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
