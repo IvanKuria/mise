@@ -1,6 +1,10 @@
-# Mise
+<p align="center">
+  <img src="docs/icon.png" width="128" height="128" alt="Mise app icon">
+</p>
 
-**Your Letterboxd diary, living in the notch.**
+<h1 align="center">Mise</h1>
+
+<p align="center"><b>Your Letterboxd diary, living in the notch.</b></p>
 
 Mise is a native macOS app that turns the empty space around your MacBook's
 notch into a glanceable, Dynamic-Island-style companion for
@@ -18,12 +22,10 @@ to — just your film life, one click away.
 
 ## Screenshots
 
-> **TODO:** capture and drop these into `docs/screenshots/`. Suggested set below.
-
 | | |
 |---|---|
-| ![Collapsed notch](docs/screenshots/notch-collapsed.png) <br> *The resting notch — quiet until you need it.* <br> **TODO: docs/screenshots/notch-collapsed.png** | ![Expanded panel](docs/screenshots/notch-expanded.png) <br> *The expanded panel with all three sections.* <br> **TODO: docs/screenshots/notch-expanded.png** |
-| ![Recently watched detail](docs/screenshots/recent-detail.png) <br> *Tap a poster for a TMDB synopsis.* <br> **TODO: docs/screenshots/recent-detail.png** | ![Contribution heatmap](docs/screenshots/heatmap.png) <br> *Films-watched heatmap with a year switcher.* <br> **TODO: docs/screenshots/heatmap.png** |
+| ![Recently watched](docs/screenshots/notch-expanded.png) <br> *Recently watched — a wall of poster art with your ratings.* | ![Film detail](docs/screenshots/recent-detail.png) <br> *Tap a film for its synopsis (or your own review).* |
+| ![Contribution heatmap](docs/screenshots/heatmap.png) <br> *A year of films watched, with a year switcher.* | ![On this day](docs/screenshots/on-this-day.png) <br> *What you logged on this date in past years.* |
 
 ---
 
@@ -62,10 +64,8 @@ translucent panel with three glanceable sections:
 
 ## Install
 
-> **TODO:** publish a notarized DMG and link it here.
-
-1. Download the latest notarized DMG from
-   **[Releases](docs/screenshots/) — TODO: link to the GitHub Releases page**.
+1. Download the latest notarized DMG from the
+   **[Releases page](https://github.com/IvanKuria/mise/releases/latest)**.
 2. Open the DMG and drag **Mise** to your Applications folder.
 3. Launch it. Mise appears in the menu bar (look for the film icon) — there is
    no Dock icon by design.
