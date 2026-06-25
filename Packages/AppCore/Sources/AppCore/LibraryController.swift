@@ -124,6 +124,23 @@ public final class LibraryController {
         self.phase = .done
     }
 
+    /// Publishes any cached history for `handle` from the store WITHOUT hitting
+    /// the network, so the UI can show data instantly on launch / profile switch.
+    /// A subsequent `load(handle:tmdbKey:)` refreshes it from Letterboxd.
+    /// No-op (leaves current state) if nothing is cached for the handle.
+    @discardableResult
+    public func restoreCached(handle: String) async -> Bool {
+        let trimmed = handle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        if let cached = try? await store.loadHistory(username: trimmed) {
+            history = cached
+            progress = 1
+            phase = .done
+            return true
+        }
+        return false
+    }
+
     // MARK: - Progress mapping
 
     /// Maps a coarse `SyncProgress` stage onto `phase` and a 0...1 fraction.

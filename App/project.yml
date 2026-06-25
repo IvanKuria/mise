@@ -16,33 +16,16 @@ settings:
     INFOPLIST_KEY_CFBundleDisplayName: Mise
     INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.entertainment"
     INFOPLIST_KEY_NSHumanReadableCopyright: "Unofficial. Not affiliated with Letterboxd."
+    INFOPLIST_KEY_LSUIElement: YES
     ENABLE_HARDENED_RUNTIME: YES
 
 packages:
   MiseCore:
     path: ../Packages/MiseCore
-  MiseUI:
-    path: ../Packages/MiseUI
-  ThemeKit:
-    path: ../Packages/ThemeKit
-  AppCore:
-    path: ../Packages/AppCore
   LocalStore:
     path: ../Packages/LocalStore
-  OnboardingFeature:
-    path: ../Packages/OnboardingFeature
-  DashboardFeature:
-    path: ../Packages/DashboardFeature
-  BrowseFeature:
-    path: ../Packages/BrowseFeature
-  CompareFeature:
-    path: ../Packages/CompareFeature
-  WatchlistFeature:
-    path: ../Packages/WatchlistFeature
-  TasteCardFeature:
-    path: ../Packages/TasteCardFeature
-  ThemeStudioFeature:
-    path: ../Packages/ThemeStudioFeature
+  AppCore:
+    path: ../Packages/AppCore
 
 targets:
   Mise:
@@ -55,15 +38,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ivankuria.mise
         SWIFT_VERSION: "6.0"
     dependencies:
-      - package: MiseCore
-      - package: MiseUI
-      - package: ThemeKit
       - package: AppCore
       - package: LocalStore
-      - package: OnboardingFeature
-      - package: DashboardFeature
-      - package: BrowseFeature
-      - package: CompareFeature
-      - package: WatchlistFeature
-      - package: TasteCardFeature
-      - package: ThemeStudioFeature
+      - package: MiseCore
