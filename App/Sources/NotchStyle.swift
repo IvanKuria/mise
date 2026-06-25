@@ -21,13 +21,23 @@ enum NotchStyle {
     static let heart = Color(red: 0.96, green: 0.42, blue: 0.47)
     static let green = Color(red: 0.20, green: 0.80, blue: 0.45)
 
-    // Metrics
+    // Metrics — radii match boring.notch's opened notch (top 19 / bottom 24).
     static let panelPaddingH: CGFloat = 18
-    static let panelPaddingBottom: CGFloat = 14
-    static let posterWidth: CGFloat = 58
+    static let panelPaddingBottom: CGFloat = 16
+    static let posterWidth: CGFloat = 60
     static let posterRadius: CGFloat = 6
-    static let bottomCorner: CGFloat = 26
-    static let topCorner: CGFloat = 10
+    static let bottomCorner: CGFloat = 24
+    static let topCorner: CGFloat = 19
+
+    // Panel lift (boring.notch: black .7, radius 6, only when open).
+    static let panelShadow = Color.black.opacity(0.7)
+    static let panelShadowRadius: CGFloat = 6
+
+    // Springs (boring.notch).
+    static let openSpring = Animation.spring(response: 0.42, dampingFraction: 0.8)
+    static let closeSpring = Animation.spring(response: 0.45, dampingFraction: 1.0)
+    static let interactiveSpring = Animation.interactiveSpring(response: 0.38, dampingFraction: 0.8)
+    static let contentSwap = Animation.smooth(duration: 0.35)
 
     /// GitHub-style contribution intensity (0 empty … 4 busiest), muted green.
     static func heatColor(level: Int) -> Color {

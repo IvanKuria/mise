@@ -14,17 +14,13 @@ struct NotchRootView: View {
         ZStack(alignment: .top) {
             if vm.isOpen {
                 expanded
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.92, anchor: .top).combined(with: .opacity),
-                        removal: .opacity
-                    ))
+                    .transition(.scale(scale: 0.8, anchor: .top).combined(with: .opacity))
             } else {
                 collapsed
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(.spring(response: 0.36, dampingFraction: 0.84), value: vm.isOpen)
-        .animation(.easeInOut(duration: 0.2), value: vm.panel)
+        .animation(NotchStyle.contentSwap, value: vm.panel)
     }
 
     // Collapsed: a black blob matching the notch (invisible over a real notch,
@@ -52,7 +48,19 @@ struct NotchRootView: View {
             .padding(.bottom, NotchStyle.panelPaddingBottom)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(NotchShape().fill(Color.black))
+        .background(
+            NotchShape()
+                .fill(Color.black)
+                .shadow(color: NotchStyle.panelShadow, radius: NotchStyle.panelShadowRadius)
+        )
+        .overlay(alignment: .top) {
+            // Seam: a thin black bar (inset past the concave ears) blends the
+            // panel's top edge into the hardware notch, hiding the join line.
+            Rectangle()
+                .fill(Color.black)
+                .frame(height: 2)
+                .padding(.horizontal, NotchStyle.topCorner)
+        }
     }
 
     @ViewBuilder

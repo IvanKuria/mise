@@ -9,6 +9,7 @@ struct NotchHeader: View {
 
     @State private var editing = false
     @State private var draft = ""
+    @Namespace private var tabNS
 
     var body: some View {
         HStack(spacing: 10) {
@@ -97,44 +98,41 @@ struct NotchHeader: View {
         HStack(spacing: 0) {
             ForEach(NotchViewModel.Panel.allCases) { panel in
                 let selected = vm.panel == panel
-                Button { vm.panel = panel } label: {
-                    Image(systemName: panel.symbol)
-                        .font(.system(size: 11, weight: .semibold))
-                        .frame(width: 30, height: 24)
-                        .foregroundStyle(selected ? NotchStyle.textPrimary : NotchStyle.textSecondary)
-                        .background(
-                            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                .fill(selected ? NotchStyle.surfaceElevated : Color.clear)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help(panel.title)
+                Image(systemName: panel.symbol)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(selected ? NotchStyle.textPrimary : NotchStyle.textSecondary)
+                    .frame(height: 26)
+                    .padding(.horizontal, 13)
+                    .background {
+                        if selected {
+                            Capsule(style: .continuous)
+                                .fill(Color.white.opacity(0.15))
+                                .matchedGeometryEffect(id: "tabpill", in: tabNS)
+                        }
+                    }
+                    .contentShape(Capsule())
+                    .onTapGesture { withAnimation(NotchStyle.contentSwap) { vm.panel = panel } }
+                    .help(panel.title)
             }
         }
-        .padding(2)
-        .background(Capsule(style: .continuous).fill(NotchStyle.surface))
+        .clipShape(Capsule(style: .continuous))
     }
 
     // MARK: Sync
 
+    @ViewBuilder
     private var syncButton: some View {
-        Button { Task { await app.syncNow() } } label: {
-            Group {
-                if app.isSyncing {
-                    ProgressView().controlSize(.small).tint(NotchStyle.textSecondary)
-                } else {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(NotchStyle.textSecondary)
-                }
+        if app.isSyncing {
+            ProgressView()
+                .controlSize(.small)
+                .tint(NotchStyle.textSecondary)
+                .frame(width: 28, height: 28)
+        } else {
+            HoverButton(systemName: "arrow.clockwise") {
+                Task { await app.syncNow() }
             }
-            .frame(width: 26, height: 26)
-            .background(Circle().fill(NotchStyle.surface))
-            .contentShape(Circle())
+            .disabled(app.currentHandle.isEmpty)
+            .help("Sync now")
         }
-        .buttonStyle(.plain)
-        .disabled(app.isSyncing || app.currentHandle.isEmpty)
-        .help("Sync now")
     }
 }

@@ -84,9 +84,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func open() {
         pendingClose = false
         // Grow the (transparent) window first so the panel has room, then let the
-        // SwiftUI content animate in.
+        // SwiftUI content animate in with boring.notch's open spring.
         window?.setFrame(placement.expandedFrame(openedSize: vm.openedSize), display: true)
-        vm.status = .opened
+        withAnimation(NotchStyle.openSpring) { vm.status = .opened }
         // First run: make the window key + active so the username field is typable.
         if appState.currentHandle.isEmpty {
             window?.makeKeyAndOrderFront(nil)
@@ -101,10 +101,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if appState.currentHandle.isEmpty && appState.history == nil { return }
         // Don't collapse while the user is editing (window is key).
         if window?.isKeyWindow == true { return }
-        vm.status = .closed
-        // Shrink after the close animation finishes so outgoing content isn't clipped.
+        // Critically-damped close (no bounce), then shrink once it settles.
+        withAnimation(NotchStyle.closeSpring) { vm.status = .closed }
         pendingClose = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
             guard let self, self.pendingClose, !self.vm.isOpen else { return }
             self.pendingClose = false
             self.window?.setFrame(self.placement.collapsedFrame, display: true)
