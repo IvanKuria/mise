@@ -2,55 +2,97 @@ import Foundation
 import Observation
 import AppCore
 import LocalStore
-import ThemeKit
-import ThemeStudioFeature
+import MiseCore
 
-/// App-wide state: the data pipeline controller, the active theme model, and the
-/// selected sidebar section. `@Observable` so SwiftUI re-renders on any change
-/// (including live theme edits in the Theme Studio).
+/// App-wide state for the notch app: the scraping pipeline controller plus the
+/// persisted username/recents/TMDB-key settings. `@Observable` so the notch UI
+/// re-renders as history loads.
 @MainActor
 @Observable
 final class AppState {
     let library: LibraryController
-    let themeModel = ThemeStudioModel(theme: .snitch)
-    var section: Section? = .dashboard
 
-    enum Section: String, CaseIterable, Identifiable, Hashable {
-        case dashboard = "Dashboard"
-        case browse = "Browse"
-        case compare = "Compare"
-        case watchlist = "Watchlist"
-        case themeStudio = "Theme"
+    /// The currently-viewed public Letterboxd username (persisted).
+    var currentHandle: String {
+        didSet { defaults.set(currentHandle, forKey: Keys.currentHandle) }
+    }
+    /// Previously-viewed usernames, most-recent first (persisted) — powers the
+    /// click-the-name profile switcher.
+    var recentHandles: [String] {
+        didSet { defaults.set(recentHandles, forKey: Keys.recentHandles) }
+    }
+    /// Optional TMDB API key enabling poster art (persisted).
+    var tmdbKey: String {
+        didSet { defaults.set(tmdbKey, forKey: Keys.tmdbKey) }
+    }
 
-        var id: String { rawValue }
+    var history: WatchHistory? { library.history }
+    var phase: LibraryController.Phase { library.phase }
+    var isSyncing: Bool {
+        switch library.phase { case .syncing, .enriching: return true; default: return false }
+    }
 
-        var symbol: String {
-            switch self {
-            case .dashboard: "chart.bar.xaxis"
-            case .browse: "square.grid.3x3.fill"
-            case .compare: "person.2.fill"
-            case .watchlist: "die.face.5.fill"
-            case .themeStudio: "paintpalette.fill"
-            }
-        }
+    private let defaults = UserDefaults.standard
+    private enum Keys {
+        static let currentHandle = "currentHandle"
+        static let recentHandles = "recentHandles"
+        static let tmdbKey = "tmdbKey"
     }
 
     init() {
-        // Persistent store on disk; fall back to in-memory if the container
-        // can't be created (e.g. a sandboxed first run with no container yet).
         let store: any HistoryStoring = AppState.makeStore()
         self.library = LibraryController(store: store)
+        self.currentHandle = defaults.string(forKey: Keys.currentHandle) ?? ""
+        self.recentHandles = defaults.stringArray(forKey: Keys.recentHandles) ?? []
+        self.tmdbKey = defaults.string(forKey: Keys.tmdbKey) ?? ""
+    }
 
-        // Dev hook: deep-link to a section for screenshots (MISE_SECTION=browse).
-        if let name = ProcessInfo.processInfo.environment["MISE_SECTION"]?.lowercased(),
-           let match = Section.allCases.first(where: { $0.rawValue.lowercased() == name }) {
-            self.section = match
+    /// Called once at launch: show cached data immediately, then refresh.
+    func bootstrap() async {
+        if ProcessInfo.processInfo.environment["MISE_DEMO"] == "1" {
+            library.loadSample(SampleData.history())
+            return
         }
+        guard !currentHandle.isEmpty else { return }
+        await library.restoreCached(handle: currentHandle)
+        await syncNow()
+    }
+
+    /// Switch to a different profile: record it, show its cached history at once,
+    /// then re-scrape in the background.
+    func switchTo(handle raw: String) async {
+        let handle = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !handle.isEmpty else { return }
+        if handle.lowercased() == "demo" {
+            currentHandle = handle
+            library.loadSample(SampleData.history())
+            return
+        }
+        currentHandle = handle
+        remember(handle)
+        await library.restoreCached(handle: handle)
+        await syncNow()
+    }
+
+    /// Re-scrape the current profile from Letterboxd.
+    func syncNow() async {
+        guard !currentHandle.isEmpty else { return }
+        if currentHandle.lowercased() == "demo" {
+            library.loadSample(SampleData.history())
+            return
+        }
+        remember(currentHandle)
+        await library.load(handle: currentHandle, tmdbKey: tmdbKey.isEmpty ? nil : tmdbKey)
+    }
+
+    private func remember(_ handle: String) {
+        var list = recentHandles.filter { $0.caseInsensitiveCompare(handle) != .orderedSame }
+        list.insert(handle, at: 0)
+        recentHandles = Array(list.prefix(8))
     }
 
     private static func makeStore() -> any HistoryStoring {
         if let persistent = try? LibraryStore() { return persistent }
-        // Last-resort in-memory store so the app still launches.
         return try! LibraryStore(inMemory: true)
     }
 }

@@ -2,14 +2,34 @@ import SwiftUI
 
 @main
 struct MiseApp: App {
-    @State private var app = AppState()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     var body: some Scene {
-        WindowGroup {
-            RootView()
-                .environment(app)
-                .frame(minWidth: 1040, minHeight: 720)
+        MenuBarExtra("mise", systemImage: "film.fill") {
+            MenuBarContent(app: delegate.appState)
         }
-        .windowToolbarStyle(.unified)
+        Settings {
+            SettingsView(app: delegate.appState)
+        }
+    }
+}
+
+/// The menu-bar dropdown: current profile, sync, settings, quit.
+private struct MenuBarContent: View {
+    let app: AppState
+
+    var body: some View {
+        if app.currentHandle.isEmpty {
+            Text("No username set")
+        } else {
+            Text("Viewing @\(app.currentHandle)")
+        }
+        Button("Sync now") { Task { await app.syncNow() } }
+            .disabled(app.currentHandle.isEmpty || app.isSyncing)
+        Divider()
+        SettingsLink { Text("Settings…") }
+        Divider()
+        Button("Quit mise") { NSApp.terminate(nil) }
+            .keyboardShortcut("q")
     }
 }
