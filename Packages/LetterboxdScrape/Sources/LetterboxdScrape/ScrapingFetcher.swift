@@ -59,11 +59,38 @@ public actor ScrapingFetcher {
     /// Diary / log entries. `perPage` is informational (Letterboxd fixes diary
     /// page size); `cursor` is an optional 1-based page number as a string.
     public func logEntries(memberID: String, perPage: Int = 50, cursor: String? = nil) async throws -> [DiaryEntry] {
+        // Primary source: the RSS feed. It's reliable (no Cloudflare challenge, no
+        // JS-lazy grid), structured, and already carries watched dates, ratings,
+        // like/rewatch flags, and poster URLs.
+        let rss: [DiaryEntry]
+        if let xml = try? await fetcher.html(for: LetterboxdURLs.rss(memberID)) {
+            rss = LetterboxdRSS.entries(xml, username: memberID)
+        } else {
+            rss = []
+        }
+
+        // Secondary: the diary HTML (page 1 is reliable; deeper pages are
+        // Cloudflare-limited). Adds anything the RSS window missed.
         let startPage = cursor.flatMap(Int.init) ?? 1
-        return try await paginate(startPage: startPage) { page in
+        var diary: [DiaryEntry] = []
+        if let entries = try? await paginate(startPage: startPage, fetch: { page -> ([DiaryEntry], Int) in
             let html = try await fetcher.html(for: LetterboxdURLs.diary(memberID, page: page))
             return (try LetterboxdParser.diaryEntries(html), try LetterboxdParser.totalPages(in: html))
+        }) {
+            diary = entries
         }
+
+        // Tertiary: the /films/ grid for additional rated films (often empty for
+        // unauthenticated clients because it renders lazily; harmless when so).
+        let grid: [DiaryEntry] = (try? await allFilms(memberID: memberID)) ?? []
+
+        // Merge, preferring richer sources first (RSS has poster + date).
+        var seen = Set<String>()
+        var merged: [DiaryEntry] = []
+        for entry in rss + diary + grid where seen.insert(entry.film.id).inserted {
+            merged.append(entry)
+        }
+        return merged
     }
 
     // MARK: - Films grid
@@ -132,7 +159,18 @@ public actor ScrapingFetcher {
         var total = page
         let limit = page + maxPages - 1
         while page <= total && page <= limit {
-            let (items, reportedTotal) = try await fetch(page)
+            let items: [T]
+            let reportedTotal: Int
+            do {
+                (items, reportedTotal) = try await fetch(page)
+            } catch {
+                // Cloudflare commonly serves page 1 from edge cache but challenges
+                // (403s) deeper pages for unauthenticated clients. Treat a failure
+                // on any page after the first as "end of data" and keep what we
+                // have, rather than failing the whole sync.
+                if page == startPage { throw error }
+                break
+            }
             if page == startPage { total = max(reportedTotal, startPage) }
             if items.isEmpty { break }
             all.append(contentsOf: items)

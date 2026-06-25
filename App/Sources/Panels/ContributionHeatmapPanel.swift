@@ -13,8 +13,8 @@ struct ContributionHeatmapPanel: View {
 
     // MARK: - Layout constants
 
-    private let weeks = 48
-    private let cell: CGFloat = 10
+    private let weeks = 53          // a full rolling year, GitHub-style
+    private let cell: CGFloat = 9
     private let gap: CGFloat = 3
     private let rows = 7  // Sun…Sat
 
@@ -122,31 +122,37 @@ struct ContributionHeatmapPanel: View {
     private func monthLabels(today: Date) -> some View {
         let cal = Calendar.current
         let columnWidth = cell + gap
-
-        // For each week column, the month of its first (Sunday) cell.
-        var labels: [(week: Int, text: String)] = []
-        var previousMonth = -1
         let df = DateFormatter()
         df.dateFormat = "MMM"
 
+        // Label the column where each new month begins, but enforce a minimum
+        // column gap so adjacent labels (e.g. Jul/Aug at the window edge) never
+        // collide. A "Mmm" label is ~22pt wide ≈ 2 columns; require ≥ 3.
+        var labels: [(week: Int, text: String)] = []
+        var previousMonth = -1
+        var lastLabeledWeek = -10
         for week in 0..<weeks {
             let columnDate = date(week: week, row: 0)
             let month = cal.component(.month, from: columnDate)
             if month != previousMonth {
-                labels.append((week, df.string(from: columnDate)))
                 previousMonth = month
+                if week - lastLabeledWeek >= 3 {
+                    labels.append((week, df.string(from: columnDate)))
+                    lastLabeledWeek = week
+                }
             }
         }
 
         return ZStack(alignment: .topLeading) {
             ForEach(labels, id: \.week) { label in
                 Text(label.text)
-                    .font(.system(size: 8))
+                    .font(.system(size: 9))
                     .foregroundColor(NotchStyle.textTertiary)
+                    .fixedSize()
                     .offset(x: CGFloat(label.week) * columnWidth)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 10, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: 12, alignment: .topLeading)
     }
 
     // MARK: - Cell

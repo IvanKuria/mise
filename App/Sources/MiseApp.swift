@@ -24,6 +24,7 @@ private struct MenuBarContent: View {
         } else {
             Text("Viewing @\(app.currentHandle)")
         }
+        Button("Open mise") { NotificationCenter.default.post(name: .miseOpenNotch, object: nil) }
         Button("Sync now") { Task { await app.syncNow() } }
             .disabled(app.currentHandle.isEmpty || app.isSyncing)
         Divider()

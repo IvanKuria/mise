@@ -7,6 +7,8 @@ import MiseCore
 struct NotchRootView: View {
     @Environment(AppState.self) private var app
     @Environment(NotchViewModel.self) private var vm
+    @State private var welcomeDraft = ""
+    @FocusState private var welcomeFocused: Bool
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -61,24 +63,65 @@ struct NotchRootView: View {
             case .onThisDay: OnThisDayPanel(history: history)
             case .heatmap:   ContributionHeatmapPanel(history: history)
             }
+        } else if app.currentHandle.isEmpty {
+            welcome
         } else {
-            emptyState
+            syncing
         }
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 7) {
+    // First run: enter a public Letterboxd username right here.
+    private var welcome: some View {
+        VStack(spacing: 10) {
             Image(systemName: "film.stack")
-                .font(.system(size: 24, weight: .light))
-                .foregroundStyle(NotchStyle.textTertiary)
-            Text(app.currentHandle.isEmpty ? "Add your Letterboxd username" : "Syncing @\(app.currentHandle)…")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 22, weight: .light))
                 .foregroundStyle(NotchStyle.textSecondary)
-            if app.currentHandle.isEmpty {
-                Text("Click the name above to get started.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(NotchStyle.textTertiary)
+            Text("Add your Letterboxd username")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(NotchStyle.textPrimary)
+            HStack(spacing: 8) {
+                HStack(spacing: 4) {
+                    Text("@").foregroundStyle(NotchStyle.textTertiary)
+                    TextField("username", text: $welcomeDraft)
+                        .textFieldStyle(.plain)
+                        .foregroundStyle(NotchStyle.textPrimary)
+                        .focused($welcomeFocused)
+                        .onSubmit(submitWelcome)
+                        .frame(width: 160)
+                }
+                .font(.system(size: 13, weight: .medium))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(Capsule().fill(NotchStyle.surface))
+
+                Button(action: submitWelcome) {
+                    Text("View")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Capsule().fill(.white))
+                }
+                .buttonStyle(.plain)
+                .disabled(welcomeDraft.trimmingCharacters(in: .whitespaces).isEmpty)
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear { welcomeFocused = true }
+    }
+
+    private func submitWelcome() {
+        let value = welcomeDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        Task { await app.switchTo(handle: value) }
+    }
+
+    private var syncing: some View {
+        VStack(spacing: 8) {
+            ProgressView().controlSize(.small).tint(NotchStyle.textSecondary)
+            Text("Syncing @\(app.currentHandle)…")
+                .font(.system(size: 12))
+                .foregroundStyle(NotchStyle.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

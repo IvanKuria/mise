@@ -18,6 +18,12 @@ enum LetterboxdURLs {
         paged("\(username)/films/", page: page)
     }
 
+    /// The member's public RSS feed — reliable, structured recent diary entries
+    /// (not Cloudflare-challenged, not JavaScript-lazy, includes poster URLs).
+    static func rss(_ username: String) -> URL {
+        base.appending(path: "\(username)/rss/")
+    }
+
     static func watchlist(_ username: String, page: Int = 1) -> URL {
         paged("\(username)/watchlist/", page: page)
     }

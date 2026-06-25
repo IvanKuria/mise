@@ -1,6 +1,10 @@
 import AppKit
 import SwiftUI
 
+extension Notification.Name {
+    static let miseOpenNotch = Notification.Name("mise.openNotch")
+}
+
 /// Owns the notch window and drives expand/collapse from hover. Patterned on
 /// NotchDrop (MIT): a borderless transparent window resized between the
 /// collapsed notch rect and the expanded panel rect.
@@ -25,6 +29,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self, selector: #selector(screensChanged),
             name: NSApplication.didChangeScreenParametersNotification, object: nil
         )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(openRequested),
+            name: .miseOpenNotch, object: nil
+        )
 
         Task {
             await appState.bootstrap()
@@ -36,9 +44,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
                 forcedOpen = true
                 open()
+            } else if appState.history == nil && appState.currentHandle.isEmpty {
+                // First run: open and keep the welcome prompt visible.
+                open()
             }
         }
     }
+
+    @objc private func openRequested() { open() }
 
     // MARK: Window
 
@@ -69,17 +82,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: Open / close
 
     private func open() {
-        guard !vm.isOpen else { return }
         pendingClose = false
         // Grow the (transparent) window first so the panel has room, then let the
         // SwiftUI content animate in.
         window?.setFrame(placement.expandedFrame(openedSize: vm.openedSize), display: true)
         vm.status = .opened
+        // First run: make the window key + active so the username field is typable.
+        if appState.currentHandle.isEmpty {
+            window?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
     private func close() {
         guard vm.isOpen else { return }
         if forcedOpen { return }
+        // Stay open until the user has set a username (welcome prompt).
+        if appState.currentHandle.isEmpty && appState.history == nil { return }
         // Don't collapse while the user is editing (window is key).
         if window?.isKeyWindow == true { return }
         vm.status = .closed
