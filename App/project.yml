@@ -13,7 +13,7 @@ settings:
     # TODO: set your Apple Developer Team ID (10-char, e.g. ABCDE12345).
     # Find it at https://developer.apple.com/account -> Membership.
     # Leave blank for local debug builds; REQUIRED for a Developer ID release.
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "347LA37C2B"
     # Automatic signing is fine for day-to-day Debug builds. For a
     # reproducible Developer ID release you typically switch to Manual
     # signing (see the Release config below and NOTARIZE.md). To force it
@@ -28,11 +28,11 @@ settings:
   configs:
     Release:
       # Developer ID distribution (direct download / DMG), not Mac App Store.
-      # Xcode resolves "Developer ID Application" to the matching cert in your
-      # keychain. With Manual signing also set CODE_SIGN_STYLE: Manual and a
-      # PROVISIONING_PROFILE_SPECIFIER if you use one (a Developer ID app does
-      # not require a provisioning profile).
+      # Manual signing with the Developer ID Application cert from the keychain;
+      # a Developer ID app does not require a provisioning profile.
       CODE_SIGN_IDENTITY: "Developer ID Application"
+      CODE_SIGN_STYLE: Manual
+      PROVISIONING_PROFILE_SPECIFIER: ""
 
 packages:
   MiseCore:

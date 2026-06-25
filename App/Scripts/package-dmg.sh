@@ -63,7 +63,9 @@ xcodebuild \
   -destination "generic/platform=macOS" \
   -archivePath "$ARCHIVE_PATH" \
   DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
-  CODE_SIGN_STYLE=Automatic \
+  CODE_SIGN_STYLE=Manual \
+  CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
+  PROVISIONING_PROFILE_SPECIFIER="" \
   archive
 
 # ExportOptions for Developer ID (direct distribution, not the App Store).
@@ -78,7 +80,7 @@ cat > "$EXPORT_PLIST" <<PLIST
   <key>teamID</key>
   <string>${DEVELOPMENT_TEAM}</string>
   <key>signingStyle</key>
-  <string>automatic</string>
+  <string>manual</string>
   <!-- Let Xcode strip swift libs / sign embedded content for hardened runtime. -->
 </dict>
 </plist>

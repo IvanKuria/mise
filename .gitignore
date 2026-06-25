@@ -12,3 +12,6 @@ xcuserdata/
 Secrets.xcconfig
 secrets.json
 .env
+
+# Build / distribution output
+App/build/
