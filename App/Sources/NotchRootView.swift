@@ -42,13 +42,13 @@ struct NotchRootView: View {
             // as growing out of the notch.
             Color.clear.frame(height: max(0, vm.notchSize.height - 6))
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 10) {
                 NotchHeader()
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
             .padding(.horizontal, NotchStyle.panelPaddingH)
-            .padding(.top, 10)
+            .padding(.top, 7)
             .padding(.bottom, NotchStyle.panelPaddingBottom)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

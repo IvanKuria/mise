@@ -29,11 +29,12 @@ struct FilmPoster: View {
             }
         }
         .frame(width: width, height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: NotchStyle.posterRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .strokeBorder(NotchStyle.hairline, lineWidth: 1)
+            RoundedRectangle(cornerRadius: NotchStyle.posterRadius, style: .continuous)
+                .strokeBorder(.white.opacity(0.12), lineWidth: 0.5)
         )
+        .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 3)
     }
 
     private var placeholder: some View {

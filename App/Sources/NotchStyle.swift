@@ -22,11 +22,11 @@ enum NotchStyle {
     static let green = Color(red: 0.20, green: 0.80, blue: 0.45)
 
     // Metrics
-    static let panelPaddingH: CGFloat = 20
-    static let panelPaddingBottom: CGFloat = 18
-    static let posterWidth: CGFloat = 72
-    static let posterRadius: CGFloat = 7
-    static let bottomCorner: CGFloat = 28
+    static let panelPaddingH: CGFloat = 18
+    static let panelPaddingBottom: CGFloat = 14
+    static let posterWidth: CGFloat = 58
+    static let posterRadius: CGFloat = 6
+    static let bottomCorner: CGFloat = 26
     static let topCorner: CGFloat = 10
 
     /// GitHub-style contribution intensity (0 empty … 4 busiest), muted green.

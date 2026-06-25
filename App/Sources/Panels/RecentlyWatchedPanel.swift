@@ -39,10 +39,15 @@ struct RecentlyWatchedPanel: View {
 struct FilmCell: View {
     let entry: DiaryEntry
     var showYear: Bool = false
+    @State private var hovering = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             FilmPoster(film: entry.film, width: NotchStyle.posterWidth)
+                .scaleEffect(hovering ? 1.05 : 1)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: hovering)
+                .onHover { hovering = $0 }
+                .help(entry.film.name + (entry.film.releaseYear.map { " (\($0))" } ?? ""))
             VStack(alignment: .leading, spacing: 3) {
                 Text(entry.film.name)
                     .font(.system(size: 11, weight: .medium))

@@ -33,8 +33,9 @@ final class NotchViewModel {
 
     /// The collapsed notch size (real notch or faux pill), set at launch.
     var notchSize: CGSize = .zero
-    /// The expanded panel size that hangs below the notch.
-    let openedSize = CGSize(width: 720, height: 268)
+    /// The expanded panel size that hangs below the notch. Kept compact — just
+    /// enough for one row of content; no wasted vertical space.
+    let openedSize = CGSize(width: 680, height: 184)
 
     var isOpen: Bool { status == .opened }
 }

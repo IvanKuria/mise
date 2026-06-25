@@ -7,6 +7,9 @@ import MiseCore
 struct ContributionHeatmapPanel: View {
     let history: WatchHistory
 
+    @State private var hoveredDay: Date?
+    @State private var hoveredCount = 0
+
     init(history: WatchHistory) {
         self.history = history
     }
@@ -92,12 +95,21 @@ struct ContributionHeatmapPanel: View {
 
     private func header(total: Int) -> some View {
         HStack(spacing: 6) {
-            Text("\(total)")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(NotchStyle.textPrimary)
-            Text("films in the last year")
-                .font(.system(size: 11))
-                .foregroundColor(NotchStyle.textSecondary)
+            if let day = hoveredDay {
+                Text(dayLabel(day))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(NotchStyle.textPrimary)
+                Text(hoveredCount == 1 ? "1 film" : "\(hoveredCount) films")
+                    .font(.system(size: 11))
+                    .foregroundColor(NotchStyle.textSecondary)
+            } else {
+                Text("\(total)")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(NotchStyle.textPrimary)
+                Text("films in the last year")
+                    .font(.system(size: 11))
+                    .foregroundColor(NotchStyle.textSecondary)
+            }
 
             Spacer()
 
@@ -170,16 +182,21 @@ struct ContributionHeatmapPanel: View {
             RoundedRectangle(cornerRadius: 2.5)
                 .fill(NotchStyle.heatColor(level: level(for: count)))
                 .frame(width: cell, height: cell)
-                .help(tooltip(for: day, count: count))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .strokeBorder(.white.opacity(hoveredDay == day ? 0.7 : 0), lineWidth: 1)
+                )
+                .onHover { inside in
+                    if inside { hoveredDay = day; hoveredCount = count }
+                    else if hoveredDay == day { hoveredDay = nil }
+                }
         }
     }
 
-    private func tooltip(for day: Date, count: Int) -> String {
+    private func dayLabel(_ day: Date) -> String {
         let df = DateFormatter()
-        df.dateStyle = .medium
-        df.timeStyle = .none
-        let films = count == 1 ? "1 film" : "\(count) films"
-        return "\(df.string(from: day)) — \(films)"
+        df.dateFormat = "MMM d, yyyy"
+        return df.string(from: day)
     }
 }
 
