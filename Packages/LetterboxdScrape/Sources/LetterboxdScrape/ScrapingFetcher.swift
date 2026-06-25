@@ -75,34 +75,18 @@ public actor ScrapingFetcher {
             rss = []
         }
 
-        // Secondary: the diary HTML (page 1 is reliable; deeper pages are
-        // Cloudflare-limited). Adds anything the RSS window missed.
+        // RSS is the whole story for the notch: ~50 recent films with posters,
+        // dates, and ratings, fetched in one request and needing no TMDB
+        // enrichment. Use it whenever it returns anything.
+        if !rss.isEmpty { return rss }
+
+        // Fallback (member keeps no public diary RSS): the diary HTML page 1.
         let startPage = cursor.flatMap(Int.init) ?? 1
-        var diary: [DiaryEntry] = []
-        if let entries = try? await paginate(startPage: startPage, fetch: { page -> ([DiaryEntry], Int) in
+        let diary = (try? await paginate(startPage: startPage, fetch: { page -> ([DiaryEntry], Int) in
             let html = try await fetcher.html(for: LetterboxdURLs.diary(memberID, page: page))
             return (try LetterboxdParser.diaryEntries(html), try LetterboxdParser.totalPages(in: html))
-        }) {
-            diary = entries
-        }
-
-        // Tertiary: the /films/ grid for additional rated films (often empty for
-        // unauthenticated clients because it renders lazily; harmless when so).
-        let grid: [DiaryEntry] = (try? await allFilms(memberID: memberID)) ?? []
-
-        // Merge, preferring richer sources first (RSS carries poster + date). The
-        // same film can appear with different ids across sources (RSS uses the
-        // slug, the diary HTML uses a viewing id), so dedupe by a normalized
-        // name+year key — otherwise a poster-less duplicate shadows the RSS entry.
-        func key(_ film: Film) -> String {
-            "\(film.name.lowercased())|\(film.releaseYear.map(String.init) ?? "")"
-        }
-        var seen = Set<String>()
-        var merged: [DiaryEntry] = []
-        for entry in rss + diary + grid where seen.insert(key(entry.film)).inserted {
-            merged.append(entry)
-        }
-        return merged
+        })) ?? []
+        return diary
     }
 
     // MARK: - Films grid

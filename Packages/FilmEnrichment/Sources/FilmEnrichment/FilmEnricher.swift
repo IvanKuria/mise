@@ -31,6 +31,11 @@ public actor FilmEnricher {
     /// Fills missing TMDB-sourced metadata on `film`. Returns the film unchanged
     /// when no TMDB match can be found.
     public func enrich(_ film: Film) async -> Film {
+        // Fast path: the RSS feed already supplies a poster (and usually a TMDB
+        // id), which is all the notch needs. Skip the network round-trip so a
+        // 50-film sync doesn't fire 50 TMDB requests.
+        if film.posterURL != nil { return film }
+
         // Already linked to TMDB: just fetch and fill.
         if let tmdbID = film.tmdbID {
             guard let movie = try? await provider.movie(tmdbID: tmdbID) else { return film }

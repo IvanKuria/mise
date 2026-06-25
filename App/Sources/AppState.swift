@@ -83,10 +83,6 @@ final class AppState {
         }
         remember(currentHandle)
         await library.load(handle: currentHandle, tmdbKey: tmdbKey.isEmpty ? nil : tmdbKey)
-        if let h = library.history {
-            let posters = h.diary.filter { $0.film.posterURL != nil }.count
-            FileHandle.standardError.write(Data("MISE diag: films=\(h.diary.count) withPoster=\(posters)\n".utf8))
-        }
     }
 
     private func remember(_ handle: String) {

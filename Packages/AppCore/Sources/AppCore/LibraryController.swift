@@ -72,7 +72,11 @@ public final class LibraryController {
                 // URLSession. The /films/ grid is populated by an authenticated
                 // React/GraphQL call, so it isn't publicly scrapable even via a
                 // headless browser — RSS is the public source of truth.
-                ScrapingFetcher()
+                //
+                // Cap pagination low: the notch is driven by the diary (RSS, one
+                // request); watchlist/lists are fetched by the pipeline but not
+                // shown, so walking dozens of their pages just stalls the sync.
+                ScrapingFetcher(maxPages: 4)
             },
             makeEnricher: { key in
                 FilmEnricher(provider: TMDBClient(apiKey: key))
