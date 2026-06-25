@@ -36,7 +36,7 @@ final class NotchViewModel {
     /// The expanded panel size that hangs below the notch. Wider than
     /// boring.notch's 640 so the year-long contribution grid fits; height matches
     /// their compact 190 — no wasted vertical space.
-    let openedSize = CGSize(width: 720, height: 190)
+    let openedSize = CGSize(width: 720, height: 220)
 
     var isOpen: Bool { status == .opened }
 }

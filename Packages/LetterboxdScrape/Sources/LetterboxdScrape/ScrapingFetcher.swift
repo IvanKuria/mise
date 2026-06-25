@@ -9,20 +9,26 @@ import MiseCore
 /// depending on LocalStore.
 public actor ScrapingFetcher {
     private let fetcher: HTMLFetching
+    /// Fetcher used for the JavaScript-lazy `/films/` grid (a real browser engine
+    /// is needed to render it). Defaults to `fetcher` when not supplied.
+    private let gridFetcher: HTMLFetching
     /// Hard cap on pages walked for any single paginated section, to stay polite.
     private let maxPages: Int
     /// Hard cap on lists whose films we fetch, to stay polite.
     private let maxListFilmFetches: Int
 
-    public init(fetcher: HTMLFetching, maxPages: Int = 50, maxListFilmFetches: Int = 0) {
+    public init(fetcher: HTMLFetching, gridFetcher: HTMLFetching? = nil, maxPages: Int = 50, maxListFilmFetches: Int = 0) {
         self.fetcher = fetcher
+        self.gridFetcher = gridFetcher ?? fetcher
         self.maxPages = maxPages
         self.maxListFilmFetches = maxListFilmFetches
     }
 
     /// Convenience initialiser building a live `URLSessionHTMLFetcher`.
     public init(politeness: PolitenessConfig = PolitenessConfig(), maxPages: Int = 50, maxListFilmFetches: Int = 0) {
-        self.fetcher = URLSessionHTMLFetcher(config: politeness)
+        let urlSession = URLSessionHTMLFetcher(config: politeness)
+        self.fetcher = urlSession
+        self.gridFetcher = urlSession
         self.maxPages = maxPages
         self.maxListFilmFetches = maxListFilmFetches
     }
@@ -103,7 +109,8 @@ public actor ScrapingFetcher {
 
     private func allFilms(memberID: String) async throws -> [DiaryEntry] {
         try await paginate(startPage: 1) { page in
-            let html = try await fetcher.html(for: LetterboxdURLs.films(memberID, page: page))
+            // The grid renders posters via React, so use the browser-engine fetcher.
+            let html = try await gridFetcher.html(for: LetterboxdURLs.films(memberID, page: page))
             return (try LetterboxdParser.filmsGrid(html), try LetterboxdParser.totalPages(in: html))
         }
     }

@@ -19,12 +19,14 @@ enum NotchStyle {
     // Restrained color
     static let star = Color(red: 0.98, green: 0.78, blue: 0.38)
     static let heart = Color(red: 0.96, green: 0.42, blue: 0.47)
-    static let green = Color(red: 0.20, green: 0.80, blue: 0.45)
+    static let green = Color(red: 0.10, green: 0.84, blue: 0.40)
 
     // Metrics — radii match boring.notch's opened notch (top 19 / bottom 24).
-    static let panelPaddingH: CGFloat = 18
+    // Horizontal padding must exceed `topCorner` (19) so content stays inside the
+    // shape's inset edges and never clips against the transparent corners.
+    static let panelPaddingH: CGFloat = 28
     static let panelPaddingBottom: CGFloat = 16
-    static let posterWidth: CGFloat = 60
+    static let posterWidth: CGFloat = 56
     static let posterRadius: CGFloat = 6
     static let bottomCorner: CGFloat = 24
     static let topCorner: CGFloat = 19
@@ -39,13 +41,14 @@ enum NotchStyle {
     static let interactiveSpring = Animation.interactiveSpring(response: 0.38, dampingFraction: 0.8)
     static let contentSwap = Animation.smooth(duration: 0.35)
 
-    /// GitHub-style contribution intensity (0 empty … 4 busiest), muted green.
+    /// GitHub-style contribution intensity (0 empty … 4 busiest). Empty cells are
+    /// visible enough to read the grid; any activity pops in Letterboxd green.
     static func heatColor(level: Int) -> Color {
         switch max(0, min(4, level)) {
-        case 0: return Color.white.opacity(0.06)
-        case 1: return green.opacity(0.32)
-        case 2: return green.opacity(0.55)
-        case 3: return green.opacity(0.78)
+        case 0: return Color.white.opacity(0.10)
+        case 1: return green.opacity(0.50)
+        case 2: return green.opacity(0.70)
+        case 3: return green.opacity(0.86)
         default: return green
         }
     }

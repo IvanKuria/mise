@@ -35,7 +35,8 @@ public final class LibraryController {
     // MARK: - Injected collaborators
 
     /// Builds the base (un-enriched) fetcher. Real impl: `ScrapingFetcher`.
-    private let makeFetcher: @Sendable () -> any LetterboxdFetching
+    /// `@MainActor` so it can construct the WKWebView-backed grid fetcher.
+    private let makeFetcher: @MainActor @Sendable () -> any LetterboxdFetching
     /// Builds a `FilmEnricher` for a non-empty TMDB key, or `nil` to skip
     /// enrichment. Real impl: a `FilmEnricher` over a `TMDBClient`.
     private let makeEnricher: @Sendable (_ tmdbKey: String) -> FilmEnricher?
@@ -50,7 +51,7 @@ public final class LibraryController {
     ///   - makeEnricher: Produces an enricher for a TMDB key, or `nil` to skip.
     public init(
         store: any HistoryStoring,
-        makeFetcher: @escaping @Sendable () -> any LetterboxdFetching,
+        makeFetcher: @escaping @MainActor @Sendable () -> any LetterboxdFetching,
         makeEnricher: @escaping @Sendable (_ tmdbKey: String) -> FilmEnricher?
     ) {
         self.store = store
@@ -66,7 +67,13 @@ public final class LibraryController {
     public convenience init(store: any HistoryStoring) {
         self.init(
             store: store,
-            makeFetcher: { ScrapingFetcher() },
+            makeFetcher: { @MainActor in
+                // The RSS feed (primary) + profile/diary are reliably fetched over
+                // URLSession. The /films/ grid is populated by an authenticated
+                // React/GraphQL call, so it isn't publicly scrapable even via a
+                // headless browser — RSS is the public source of truth.
+                ScrapingFetcher()
+            },
             makeEnricher: { key in
                 FilmEnricher(provider: TMDBClient(apiKey: key))
             }

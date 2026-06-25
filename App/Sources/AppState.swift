@@ -83,15 +83,6 @@ final class AppState {
         }
         remember(currentHandle)
         await library.load(handle: currentHandle, tmdbKey: tmdbKey.isEmpty ? nil : tmdbKey)
-        if let h = library.history {
-            let total = h.diary.count
-            let posters = h.diary.filter { $0.film.posterURL != nil }.count
-            let dated = h.diary.filter { $0.watchedDate != nil }.count
-            let msg = "MISE diag: films=\(total) withPoster=\(posters) withWatchedDate=\(dated) tmdbKey=\(tmdbKey.isEmpty ? "NONE" : "set(\(tmdbKey.count))") phase=\(library.phase)\n"
-            FileHandle.standardError.write(Data(msg.utf8))
-        } else {
-            FileHandle.standardError.write(Data("MISE diag: history=nil phase=\(library.phase)\n".utf8))
-        }
     }
 
     private func remember(_ handle: String) {
