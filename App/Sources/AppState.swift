@@ -1,5 +1,7 @@
 import Foundation
 import Observation
+import OSLog
+import ServiceManagement
 import AppCore
 import LocalStore
 import MiseCore
@@ -33,6 +35,22 @@ final class AppState {
         switch library.phase { case .syncing, .enriching: return true; default: return false }
     }
 
+    /// Short, user-facing message describing the last sync failure, or nil when
+    /// the last sync succeeded / none has run. Observable so the UI can surface it.
+    var syncErrorMessage: String?
+
+    /// When the last successful (or attempted) sync completed; used by
+    /// `refreshIfStale()` and the periodic auto-refresh.
+    private(set) var lastSyncDate: Date?
+
+    /// How stale data may get before `refreshIfStale()` re-syncs (~20 min).
+    private let staleInterval: TimeInterval = 20 * 60
+    /// Periodic background auto-refresh cadence (~30 min).
+    private let autoRefreshInterval: TimeInterval = 30 * 60
+
+    private var autoRefreshTimer: Timer?
+    private let log = Logger(subsystem: "app.mise", category: "AppState")
+
     /// Cache of fetched TMDB details, keyed by tmdb id, for the film detail view.
     private var detailCache: [Int: TMDBMovie] = [:]
 
@@ -53,6 +71,7 @@ final class AppState {
 
     /// Called once at launch: show cached data immediately, then refresh.
     func bootstrap() async {
+        startAutoRefresh()
         if ProcessInfo.processInfo.environment["MISE_DEMO"] == "1" {
             library.loadSample(SampleData.history())
             return
@@ -81,12 +100,77 @@ final class AppState {
     /// Re-scrape the current profile from Letterboxd.
     func syncNow() async {
         guard !currentHandle.isEmpty else { return }
+        syncErrorMessage = nil
         if currentHandle.lowercased() == "demo" {
             library.loadSample(SampleData.history())
+            lastSyncDate = Date()
             return
         }
         remember(currentHandle)
         await library.load(handle: currentHandle, tmdbKey: tmdbKey.isEmpty ? nil : tmdbKey)
+        lastSyncDate = Date()
+        // Map the controller's failure into a short, user-facing message.
+        if case .failed(let msg) = library.phase {
+            syncErrorMessage = Self.userFacingSyncError(msg, handle: currentHandle)
+        } else {
+            syncErrorMessage = nil
+        }
+    }
+
+    /// Maps a raw pipeline failure message to a short message for the notch UI.
+    private static func userFacingSyncError(_ raw: String, handle: String) -> String {
+        let lower = raw.lowercased()
+        if lower.contains("404") || lower.contains("not found") {
+            return "Couldn't find @\(handle)"
+        }
+        if lower.contains("offline") || lower.contains("internet")
+            || lower.contains("network") || lower.contains("cancel")
+            || lower.contains("connection") || lower.contains("timed out")
+            || lower.contains("timeout") {
+            return "No internet connection"
+        }
+        return "Sync failed"
+    }
+
+    /// Re-sync only if the last sync is older than `staleInterval`. Guarded so two
+    /// syncs never overlap (skips while a sync is already in flight).
+    func refreshIfStale() async {
+        guard !currentHandle.isEmpty, !isSyncing else { return }
+        if let last = lastSyncDate, Date().timeIntervalSince(last) < staleInterval { return }
+        await syncNow()
+    }
+
+    /// Starts the periodic background refresh (idempotent). Called from bootstrap.
+    func startAutoRefresh() {
+        guard autoRefreshTimer == nil else { return }
+        let timer = Timer(timeInterval: autoRefreshInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, !self.isSyncing else { return }
+                await self.syncNow()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        autoRefreshTimer = timer
+    }
+
+    // MARK: - Launch at login
+
+    /// Whether the app is registered to launch at login.
+    var launchAtLoginEnabled: Bool {
+        SMAppService.mainApp.status == .enabled
+    }
+
+    /// Register or unregister the app as a login item. Errors are logged, not thrown.
+    func setLaunchAtLogin(_ on: Bool) {
+        do {
+            if on {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            log.error("Failed to set launch at login (on=\(on)): \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     /// Fetches TMDB details (synopsis, runtime, genres) for a film, cached. Needs

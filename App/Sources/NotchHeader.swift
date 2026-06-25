@@ -17,7 +17,19 @@ struct NotchHeader: View {
             handle
             Spacer(minLength: 12)
             panelSwitcher
+            syncStatus
             syncButton
+        }
+    }
+
+    // Tiny, non-blocking hint when a sync failed but we still have data to show.
+    @ViewBuilder
+    private var syncStatus: some View {
+        if !app.isSyncing, app.syncErrorMessage != nil, app.history != nil {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(NotchStyle.warning)
+                .help(app.syncErrorMessage ?? "Last sync failed")
         }
     }
 

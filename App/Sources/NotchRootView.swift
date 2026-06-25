@@ -21,6 +21,27 @@ struct NotchRootView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(NotchStyle.contentSwap, value: vm.panel)
+        // Esc closes the panel. Best-effort: works when the window is key, and the
+        // hidden cancel button covers the keyboardShortcut path.
+        .onExitCommand(perform: close)
+        .background {
+            Button("", action: close)
+                .keyboardShortcut(.cancelAction)
+                .opacity(0)
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+        }
+        // Subtle haptic on open only.
+        .onChange(of: vm.status) { _, status in
+            if status == .opened {
+                NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+            }
+        }
+    }
+
+    private func close() {
+        guard vm.isOpen else { return }
+        withAnimation(NotchStyle.closeSpring) { vm.status = .closed }
     }
 
     // Collapsed: a black blob matching the notch (invisible over a real notch,
@@ -65,7 +86,7 @@ struct NotchRootView: View {
 
     @ViewBuilder
     private var content: some View {
-        if let history = app.history {
+        if let history = app.history, !history.diary.isEmpty {
             switch vm.panel {
             case .recent:    RecentlyWatchedPanel(history: history)
             case .onThisDay: OnThisDayPanel(history: history)
@@ -73,9 +94,37 @@ struct NotchRootView: View {
             }
         } else if app.currentHandle.isEmpty {
             welcome
+        } else if app.syncErrorMessage != nil {
+            errorCard
         } else {
             syncing
         }
+    }
+
+    // Sync failed and we have nothing to show: explain and offer a retry.
+    private var errorCard: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 22, weight: .light))
+                .foregroundStyle(NotchStyle.warning)
+            Text(app.syncErrorMessage ?? "Couldn’t sync")
+                .font(.system(size: 12))
+                .foregroundStyle(NotchStyle.textSecondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .frame(maxWidth: 340)
+
+            Button(action: { Task { await app.syncNow() } }) {
+                Text("Try again")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(NotchStyle.textPrimary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(Capsule().fill(NotchStyle.pillFill))
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // First run: enter a public Letterboxd username right here.

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  mise entitlements — Developer ID (direct distribution), NOT Mac App Store.
+
+	  The App Sandbox is intentionally DISABLED. mise is distributed directly
+	  via a notarized Developer ID build (not the MAS), so we do not require the
+	  sandbox. Leaving it off gives the app unrestricted filesystem and network
+	  access (e.g. reading user-chosen library exports, talking to TMDB / the
+	  network) without having to enumerate sandbox temporary-exception
+	  entitlements.
+
+	  Hardened Runtime IS enabled (see ENABLE_HARDENED_RUNTIME in project.yml),
+	  which is required for notarization. The entitlements below are the
+	  hardened-runtime-compatible set: none of the JIT / dyld / library-loading
+	  exceptions are turned on, because mise does not need them. Add them only
+	  if a future dependency genuinely requires it.
+
+	  IF YOU EVER ADOPT THE SANDBOX (e.g. to ship on the Mac App Store), add:
+	    <key>com.apple.security.app-sandbox</key>            <true/>
+	    <key>com.apple.security.network.client</key>         <true/>   (outbound TMDB / network)
+	    <key>com.apple.security.files.user-selected.read-only</key> <true/>  (importing a Letterboxd export)
+	  …and re-test, since the sandbox will then restrict filesystem access.
+	-->
+</dict>
+</plist>

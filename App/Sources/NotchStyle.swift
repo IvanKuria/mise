@@ -20,6 +20,11 @@ enum NotchStyle {
     static let star = Color(red: 0.98, green: 0.78, blue: 0.38)
     static let heart = Color(red: 0.96, green: 0.42, blue: 0.47)
     static let green = Color(red: 0.10, green: 0.84, blue: 0.40)
+    static let warning = Color(red: 0.98, green: 0.66, blue: 0.36)
+
+    // Pill button fills (capsule actions with a text label).
+    static let pillFill = Color.white.opacity(0.12)
+    static let pillFillHover = Color.white.opacity(0.18)
 
     // Metrics — radii match boring.notch's opened notch (top 19 / bottom 24).
     // Horizontal padding must exceed `topCorner` (19) so content stays inside the

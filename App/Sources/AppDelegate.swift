@@ -65,8 +65,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 .environment(appState)
                 .environment(vm)
         )
-        host.autoresizingMask = [.width, .height]
-        window.contentView = host
+        // Wrap the SwiftUI host in a tracking view so hover works with NO
+        // Accessibility permission (the global mouseMoved monitor below is only a
+        // secondary trigger). The tracking area's enter/exit drive open/close.
+        let tracking = TrackingHostView(content: host)
+        tracking.onEntered = { [weak self] in self?.open() }
+        tracking.onExited = { [weak self] in self?.close() }
+        tracking.autoresizingMask = [.width, .height]
+        window.contentView = tracking
         window.setFrame(placement.collapsedFrame, display: true)
         window.orderFrontRegardless()
         self.window = window
@@ -87,6 +93,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // SwiftUI content animate in with boring.notch's open spring.
         window?.setFrame(placement.expandedFrame(openedSize: vm.openedSize), display: true)
         withAnimation(NotchStyle.openSpring) { vm.status = .opened }
+        // Opportunistically refresh stale data when the notch is opened.
+        Task { await appState.refreshIfStale() }
         // First run: make the window key + active so the username field is typable.
         if appState.currentHandle.isEmpty {
             window?.makeKeyAndOrderFront(nil)

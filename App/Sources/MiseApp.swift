@@ -28,6 +28,10 @@ private struct MenuBarContent: View {
         Button("Sync now") { Task { await app.syncNow() } }
             .disabled(app.currentHandle.isEmpty || app.isSyncing)
         Divider()
+        Toggle("Launch at Login", isOn: Binding(
+            get: { app.launchAtLoginEnabled },
+            set: { app.setLaunchAtLogin($0) }
+        ))
         SettingsLink { Text("Settings…") }
         Divider()
         Button("Quit mise") { NSApp.terminate(nil) }

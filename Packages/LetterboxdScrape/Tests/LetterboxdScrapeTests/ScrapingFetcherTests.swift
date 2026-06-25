@@ -39,8 +39,10 @@ struct ScrapingFetcherTests {
         #expect(!urls.contains(base("alice/diary/page/3/")))
     }
 
-    @Test("logEntries honours a page cursor")
+    @Test("logEntries falls back to the diary HTML (honouring a page cursor) when RSS is empty")
     func diaryCursor() async throws {
+        // No RSS response is registered, so the RSS primary source yields nothing
+        // and logEntries falls back to the diary HTML at the requested cursor.
         let mock = MockFetcher(responses: [
             base("alice/diary/page/2/"): try Fixture.html("diary"),
         ])
@@ -48,7 +50,9 @@ struct ScrapingFetcherTests {
         let entries = try await fetcher.logEntries(memberID: "alice", perPage: 50, cursor: "2")
         #expect(entries.count == 3)
         let urls = await mock.requestedURLs()
-        #expect(urls.first == base("alice/diary/page/2/"))
+        // RSS is attempted first, then the diary fallback at page 2.
+        #expect(urls.first == base("alice/rss/"))
+        #expect(urls.contains(base("alice/diary/page/2/")))
     }
 
     @Test("films walks the grid across multiple pages")

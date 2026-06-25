@@ -1,8 +1,17 @@
 import SwiftUI
 
-/// Settings window: set the public Letterboxd username and an optional TMDB key.
+/// Settings window: set the public Letterboxd username and an optional TMDB key,
+/// toggle launch-at-login, and view app info + required attributions.
 struct SettingsView: View {
     @Bindable var app: AppState
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+    }
+
+    private var appName: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "mise"
+    }
 
     var body: some View {
         Form {
@@ -34,8 +43,28 @@ struct SettingsView: View {
                 Button("Sync now") { Task { await app.syncNow() } }
                     .disabled(app.currentHandle.isEmpty || app.isSyncing)
             }
+
+            Section("General") {
+                Toggle("Launch at login", isOn: Binding(
+                    get: { app.launchAtLoginEnabled },
+                    set: { app.setLaunchAtLogin($0) }
+                ))
+            }
+
+            Section("About") {
+                LabeledContent(appName) {
+                    Text("Version \(appVersion)")
+                        .foregroundStyle(.secondary)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("This product uses the TMDB API but is not endorsed or certified by TMDB.")
+                    Text("Unofficial — not affiliated with Letterboxd.")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 380, height: 360)
+        .frame(width: 380, height: 480)
     }
 }
