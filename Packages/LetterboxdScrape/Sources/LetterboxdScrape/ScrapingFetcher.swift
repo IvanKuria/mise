@@ -90,10 +90,16 @@ public actor ScrapingFetcher {
         // unauthenticated clients because it renders lazily; harmless when so).
         let grid: [DiaryEntry] = (try? await allFilms(memberID: memberID)) ?? []
 
-        // Merge, preferring richer sources first (RSS has poster + date).
+        // Merge, preferring richer sources first (RSS carries poster + date). The
+        // same film can appear with different ids across sources (RSS uses the
+        // slug, the diary HTML uses a viewing id), so dedupe by a normalized
+        // name+year key — otherwise a poster-less duplicate shadows the RSS entry.
+        func key(_ film: Film) -> String {
+            "\(film.name.lowercased())|\(film.releaseYear.map(String.init) ?? "")"
+        }
         var seen = Set<String>()
         var merged: [DiaryEntry] = []
-        for entry in rss + diary + grid where seen.insert(entry.film.id).inserted {
+        for entry in rss + diary + grid where seen.insert(key(entry.film)).inserted {
             merged.append(entry)
         }
         return merged

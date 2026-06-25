@@ -53,17 +53,21 @@ struct FilmCell: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(NotchStyle.textPrimary)
                     .lineLimit(1)
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     if showYear, let year = entry.film.releaseYear {
                         Text(String(year))
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(NotchStyle.textSecondary)
                     }
                     if let rating = entry.rating {
-                        Text(rating.starString)
-                            .font(.system(size: 10))
-                            .foregroundStyle(NotchStyle.star)
-                            .lineLimit(1)
+                        HStack(spacing: 2) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 7, weight: .semibold))
+                                .foregroundStyle(NotchStyle.star)
+                            Text(String(format: "%g", rating.stars))
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(NotchStyle.textSecondary)
+                        }
                     }
                     if entry.isLiked {
                         Image(systemName: "heart.fill")
