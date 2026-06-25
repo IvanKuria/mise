@@ -8,6 +8,8 @@ public struct TMDBMovie: Sendable, Equatable {
     public let runtime: Int?
     public let releaseDate: String?
     public let genres: [String]
+    public let overview: String?
+    public let tagline: String?
 
     public init(
         id: Int,
@@ -15,7 +17,9 @@ public struct TMDBMovie: Sendable, Equatable {
         posterPath: String?,
         runtime: Int?,
         releaseDate: String?,
-        genres: [String]
+        genres: [String],
+        overview: String? = nil,
+        tagline: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -23,6 +27,8 @@ public struct TMDBMovie: Sendable, Equatable {
         self.runtime = runtime
         self.releaseDate = releaseDate
         self.genres = genres
+        self.overview = overview
+        self.tagline = tagline
     }
 }
 

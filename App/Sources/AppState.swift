@@ -3,6 +3,7 @@ import Observation
 import AppCore
 import LocalStore
 import MiseCore
+import TMDBKit
 
 /// App-wide state for the notch app: the scraping pipeline controller plus the
 /// persisted username/recents/TMDB-key settings. `@Observable` so the notch UI
@@ -31,6 +32,9 @@ final class AppState {
     var isSyncing: Bool {
         switch library.phase { case .syncing, .enriching: return true; default: return false }
     }
+
+    /// Cache of fetched TMDB details, keyed by tmdb id, for the film detail view.
+    private var detailCache: [Int: TMDBMovie] = [:]
 
     private let defaults = UserDefaults.standard
     private enum Keys {
@@ -83,6 +87,17 @@ final class AppState {
         }
         remember(currentHandle)
         await library.load(handle: currentHandle, tmdbKey: tmdbKey.isEmpty ? nil : tmdbKey)
+    }
+
+    /// Fetches TMDB details (synopsis, runtime, genres) for a film, cached. Needs
+    /// a TMDB key; returns nil without one or on failure.
+    func filmDetail(tmdbID: Int?) async -> TMDBMovie? {
+        guard let id = tmdbID, !tmdbKey.isEmpty else { return nil }
+        if let cached = detailCache[id] { return cached }
+        let client = TMDBClient(apiKey: tmdbKey)
+        guard let movie = try? await client.movie(tmdbID: id) else { return nil }
+        detailCache[id] = movie
+        return movie
     }
 
     private func remember(_ handle: String) {

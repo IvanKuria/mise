@@ -26,6 +26,8 @@ packages:
     path: ../Packages/LocalStore
   AppCore:
     path: ../Packages/AppCore
+  TMDBKit:
+    path: ../Packages/TMDBKit
 
 targets:
   Mise:
@@ -41,3 +43,4 @@ targets:
       - package: AppCore
       - package: LocalStore
       - package: MiseCore
+      - package: TMDBKit

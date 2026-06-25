@@ -10,9 +10,11 @@ struct MovieDTO: Decodable {
     let runtime: Int?
     let releaseDate: String?
     let genres: [GenreDTO]?
+    let overview: String?
+    let tagline: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, runtime, genres
+        case id, title, runtime, genres, overview, tagline
         case posterPath = "poster_path"
         case releaseDate = "release_date"
     }
@@ -24,7 +26,9 @@ struct MovieDTO: Decodable {
             posterPath: posterPath,
             runtime: runtime,
             releaseDate: releaseDate,
-            genres: (genres ?? []).map(\.name)
+            genres: (genres ?? []).map(\.name),
+            overview: overview,
+            tagline: tagline
         )
     }
 }
